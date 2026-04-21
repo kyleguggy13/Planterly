@@ -60,6 +60,12 @@
         <label for="week-sel">Week</label>
         <select id="week-sel"></select>
       </div>
+      <div id="accountControls">
+        <button class="btn btn-ghost" id="loginBtn">Sign in with Google</button>
+        <button class="btn btn-ghost" id="logoutBtn" style="display:none;">Sign out</button>
+        <button id="testSaveBtn" style="display:none;">Test Firebase Save</button>
+        <span id="userStatus">Not signed in</span>
+      </div>
     </div>
 
     <div class="content">
@@ -215,6 +221,51 @@
 </div><!-- /app-shell -->
 
 <script>
+// ── Google Sign-in ────────────────────────────────────────────────────────────
+// import {
+//   signInWithGoogle,
+//   logOut,
+//   watchAuth,
+//   loadMeals,
+//   loadLibrary
+// } from "./firebase.js";
+
+// const loginBtn = document.getElementById("loginBtn");
+// const logoutBtn = document.getElementById("logoutBtn");
+// const userStatus = document.getElementById("userStatus");
+
+// let currentUser = null;
+
+// loginBtn.addEventListener("click", async () => {
+//   await signInWithGoogle();
+// });
+
+// logoutBtn.addEventListener("click", async () => {
+//   await logOut();
+// });
+
+// watchAuth(async user => {
+//   currentUser = user;
+
+//   if (user) {
+//     loginBtn.style.display = "none";
+//     logoutBtn.style.display = "inline-block";
+//     userStatus.textContent = `Signed in as ${user.email}`;
+
+//     const meals = await loadMeals(user.uid);
+//     const library = await loadLibrary(user.uid);
+
+//     console.log("Meals from Firestore:", meals);
+//     console.log("Library from Firestore:", library);
+
+//     // Later: assign these into your existing app state and re-render.
+//   } else {
+//     loginBtn.style.display = "inline-block";
+//     logoutBtn.style.display = "none";
+//     userStatus.textContent = "Not signed in";
+//   }
+// });
+
 // ── State ────────────────────────────────────────────────────────────
 const CAT = {
   vegetable: { label: 'Vegetable', bg: '#E8F5EE', border: '#C3E6D0', text: '#0E4F31' },
@@ -703,6 +754,8 @@ function renderAll() {
 
 renderAll();
 </script>
+<script type="module" src="./firebase.js"></script>
+<script type="module" src="./app.js"></script>
 </body>
 </html>
 
