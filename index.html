@@ -1,0 +1,1123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>30 Plants — Weekly Tracker</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --green-50: #E8F5EE;
+    --green-100: #C3E6D0;
+    --green-400: #2E9E68;
+    --green-600: #1A7A4E;
+    --green-800: #0E4F31;
+    --green-900: #072B1A;
+    --stone-50: #F7F6F3;
+    --stone-100: #EDEBE6;
+    --stone-200: #D9D6CE;
+    --stone-400: #9E9A91;
+    --stone-600: #6B6760;
+    --stone-800: #3A3834;
+    --stone-900: #1C1B18;
+    --amber-50: #FDF6E3;
+    --amber-400: #D4A017;
+    --amber-600: #A67C00;
+    --teal-50: #E3F4F4;
+    --teal-400: #1A9E9E;
+    --teal-600: #0F7070;
+    --coral-50: #FDF0EC;
+    --coral-400: #D86040;
+    --coral-600: #A8421E;
+    --lavender-50: #F0EEF8;
+    --lavender-400: #8070CC;
+    --lavender-600: #5A4AA0;
+    --bg: #F4F2ED;
+    --surface: #FFFFFF;
+    --surface-2: #F7F6F3;
+    --border: rgba(58,56,52,0.10);
+    --border-md: rgba(58,56,52,0.18);
+    --text: #1C1B18;
+    --text-2: #6B6760;
+    --text-3: #9E9A91;
+    --accent: #2E9E68;
+    --accent-dark: #1A7A4E;
+    --radius-sm: 6px;
+    --radius-md: 10px;
+    --radius-lg: 16px;
+    --radius-xl: 22px;
+    --shadow-sm: 0 1px 3px rgba(28,27,24,0.07), 0 1px 2px rgba(28,27,24,0.05);
+    --shadow-md: 0 4px 12px rgba(28,27,24,0.08), 0 1px 3px rgba(28,27,24,0.05);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 400;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    line-height: 1.5;
+  }
+
+  /* ── Layout ── */
+  .app-shell { display: flex; min-height: 100vh; }
+
+  .sidebar {
+    width: 220px;
+    flex-shrink: 0;
+    background: var(--stone-900);
+    display: flex;
+    flex-direction: column;
+    padding: 28px 0 24px;
+    position: sticky;
+    top: 0;
+    height: 100vh;
+  }
+
+  .sidebar-logo {
+    padding: 0 20px 28px;
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+    margin-bottom: 16px;
+  }
+  .sidebar-logo-mark {
+    font-family: 'DM Serif Display', serif;
+    font-size: 22px;
+    color: #fff;
+    line-height: 1.1;
+    letter-spacing: -0.3px;
+  }
+  .sidebar-logo-sub {
+    font-size: 11px;
+    color: rgba(255,255,255,0.35);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-top: 3px;
+  }
+
+  .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 20px;
+    font-size: 13.5px;
+    color: rgba(255,255,255,0.45);
+    cursor: pointer;
+    border-left: 2px solid transparent;
+    transition: color 0.15s, background 0.15s;
+    user-select: none;
+  }
+  .nav-item:hover { color: rgba(255,255,255,0.75); background: rgba(255,255,255,0.04); }
+  .nav-item.active { color: #fff; border-left-color: var(--accent); background: rgba(255,255,255,0.06); }
+  .nav-icon { width: 16px; height: 16px; flex-shrink: 0; opacity: 0.7; }
+  .nav-item.active .nav-icon { opacity: 1; }
+
+  .sidebar-footer {
+    margin-top: auto;
+    padding: 16px 20px 0;
+    border-top: 1px solid rgba(255,255,255,0.08);
+    font-size: 12px;
+    color: rgba(255,255,255,0.25);
+  }
+  .sidebar-data {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .sidebar-data-copy {
+    font-size: 12px;
+    color: rgba(255,255,255,0.25);
+  }
+  .sidebar-data-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .sidebar-data-actions .btn-ghost {
+    width: 100%;
+    color: rgba(255,255,255,0.78);
+    border-color: rgba(255,255,255,0.14);
+  }
+  .sidebar-data-actions .btn-ghost:hover { background: rgba(255,255,255,0.08); }
+  .sidebar-data .data-status {
+    min-height: 28px;
+    white-space: normal;
+    color: rgba(255,255,255,0.45);
+  }
+
+  .main { flex: 1; overflow-x: hidden; }
+
+  .topbar {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 0 32px;
+    min-height: 56px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+  .topbar-title { font-size: 15px; font-weight: 500; color: var(--text); }
+  .data-status {
+    font-size: 12px;
+    color: var(--text-2);
+    min-height: 16px;
+    white-space: nowrap;
+  }
+  .topbar-week { display: flex; align-items: center; gap: 8px; }
+  .topbar-week label { font-size: 12px; color: var(--text-2); }
+  .topbar-week select {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    color: var(--text);
+    background: var(--surface-2);
+    border: 1px solid var(--border-md);
+    border-radius: var(--radius-sm);
+    padding: 5px 10px;
+    cursor: pointer;
+    outline: none;
+  }
+  .topbar-week select:focus { border-color: var(--accent); }
+
+  .content { padding: 28px 32px; max-width: 1100px; }
+
+  /* ── Tabs (page sections) ── */
+  .page { display: none; }
+  .page.active { display: block; }
+
+  /* ── Metric cards ── */
+  .metrics-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 28px; }
+
+  .metric-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 18px 20px;
+    box-shadow: var(--shadow-sm);
+  }
+  .metric-label { font-size: 11.5px; color: var(--text-3); letter-spacing: 0.05em; text-transform: uppercase; margin-bottom: 8px; }
+  .metric-value { font-family: 'DM Serif Display', serif; font-size: 34px; color: var(--text); line-height: 1; }
+  .metric-value.accent { color: var(--accent); }
+  .metric-sub { font-size: 12px; color: var(--text-2); margin-top: 6px; }
+  .metric-bar { background: var(--stone-100); border-radius: 99px; height: 4px; margin-top: 10px; overflow: hidden; }
+  .metric-bar-fill { height: 100%; border-radius: 99px; background: var(--accent); transition: width 0.5s ease; }
+
+  /* ── Cards ── */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-sm);
+  }
+  .card-header {
+    padding: 18px 22px 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .card-title { font-size: 13px; font-weight: 500; color: var(--text-2); letter-spacing: 0.02em; }
+  .card-body { padding: 16px 22px 20px; }
+
+  /* ── Two-col form layout ── */
+  .form-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 28px; }
+
+  /* ── Form ── */
+  .field { margin-bottom: 14px; }
+  .field:last-child { margin-bottom: 0; }
+  .field label { display: block; font-size: 12px; color: var(--text-2); margin-bottom: 5px; font-weight: 500; }
+  .field input, .field select, .field textarea {
+    width: 100%;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    color: var(--text);
+    background: var(--surface-2);
+    border: 1px solid var(--border-md);
+    border-radius: var(--radius-sm);
+    padding: 8px 12px;
+    outline: none;
+    transition: border-color 0.15s;
+    appearance: none;
+  }
+  .field input:focus, .field select:focus { border-color: var(--accent); background: #fff; }
+  .field select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' fill='none'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%236B6760' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 10px center; padding-right: 28px; cursor: pointer; }
+
+  .ac-wrap { position: relative; }
+  .ac-drop {
+    position: absolute;
+    top: calc(100% + 3px);
+    left: 0; right: 0;
+    background: var(--surface);
+    border: 1px solid var(--border-md);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-md);
+    z-index: 100;
+    max-height: 180px;
+    overflow-y: auto;
+    display: none;
+  }
+  .ac-item {
+    padding: 8px 12px;
+    font-size: 13px;
+    color: var(--text);
+    cursor: pointer;
+    border-bottom: 1px solid var(--border);
+    transition: background 0.1s;
+  }
+  .ac-item:last-child { border-bottom: none; }
+  .ac-item:hover, .ac-item.active { background: var(--green-50); color: var(--green-800); }
+  .ac-item.new-item { color: var(--text-2); font-style: italic; }
+
+  .chips-area {
+    min-height: 40px;
+    background: var(--surface-2);
+    border: 1px dashed var(--border-md);
+    border-radius: var(--radius-md);
+    padding: 8px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    align-items: flex-start;
+    margin-bottom: 14px;
+  }
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    border-radius: 99px;
+    padding: 3px 10px 3px 10px;
+    font-size: 12.5px;
+    font-weight: 500;
+    background: var(--green-50);
+    border: 1px solid var(--green-100);
+    color: var(--green-800);
+    animation: chipIn 0.15s ease;
+  }
+  @keyframes chipIn { from { opacity:0; transform:scale(0.85); } to { opacity:1; transform:scale(1); } }
+  .chip.dup { background: var(--stone-50); border-color: var(--stone-200); color: var(--stone-600); }
+  .chip-x { cursor: pointer; font-size: 14px; line-height: 1; color: var(--green-600); margin-left: 1px; }
+  .chip.dup .chip-x { color: var(--stone-400); }
+  .chip-x:hover { color: var(--green-900); }
+  .chips-empty { font-size: 12px; color: var(--text-3); font-style: italic; padding: 2px 2px; }
+
+  .btn {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13.5px;
+    font-weight: 500;
+    padding: 9px 18px;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    outline: none;
+    border: none;
+    transition: background 0.15s, transform 0.1s;
+  }
+  .btn:active { transform: scale(0.98); }
+  .btn-primary { background: var(--accent); color: #fff; width: 100%; padding: 10px; }
+  .btn-primary:hover { background: var(--accent-dark); }
+  .btn-ghost { background: transparent; color: var(--text-2); border: 1px solid var(--border-md); }
+  .btn-ghost:hover { background: var(--surface-2); }
+  .btn-secondary { background: transparent; color: var(--accent-dark); border: 1px solid rgba(26,122,78,0.2); font-size: 12px; padding: 4px 10px; }
+  .btn-secondary:hover { background: var(--green-50); }
+  .btn-danger { background: transparent; color: #C0392B; border: 1px solid rgba(192,57,43,0.2); font-size: 12px; padding: 4px 10px; }
+  .btn-danger:hover { background: #FDF0EE; }
+  .form-actions { display: flex; gap: 8px; }
+  .form-actions .btn { width: auto; }
+  .form-actions .btn-primary { flex: 1; }
+
+  .save-msg { font-size: 12px; text-align: center; margin-top: 8px; min-height: 16px; color: var(--green-600); font-weight: 500; }
+
+  /* ── Quick library panel ── */
+  .quick-grid { display: flex; flex-wrap: wrap; gap: 6px; }
+
+  /* ── Cat pills ── */
+  .cat-pill {
+    display: inline-block;
+    border-radius: 99px;
+    padding: 2px 8px;
+    font-size: 11px;
+    font-weight: 500;
+  }
+
+  /* ── History tab ── */
+  .unique-pills { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 20px; }
+  .u-pill {
+    background: var(--green-50);
+    border: 1px solid var(--green-100);
+    color: var(--green-800);
+    border-radius: 99px;
+    padding: 4px 12px;
+    font-size: 12.5px;
+    font-weight: 500;
+  }
+
+  .log-table { width: 100%; border-collapse: collapse; }
+  .log-table th {
+    font-size: 11.5px;
+    color: var(--text-3);
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: 0 12px 10px;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+  }
+  .log-row { border-bottom: 1px solid var(--border); }
+  .log-row:last-child { border-bottom: none; }
+  .log-row td { padding: 11px 12px; vertical-align: middle; font-size: 13.5px; }
+  .log-date { color: var(--text-2); font-size: 13px; }
+  .log-meal-badge {
+    display: inline-block;
+    background: var(--stone-100);
+    color: var(--stone-600);
+    border-radius: var(--radius-sm);
+    padding: 2px 8px;
+    font-size: 12px;
+  }
+  .log-plants-cell { display: flex; flex-wrap: wrap; gap: 4px; }
+  .log-actions { display: flex; gap: 8px; justify-content: flex-end; }
+  .lp { background: var(--surface-2); border: 1px solid var(--border); border-radius: 99px; padding: 2px 9px; font-size: 12px; color: var(--text); }
+  .log-row:hover td { background: var(--stone-50); }
+
+  /* ── Library tab ── */
+  .lib-add-row { display: flex; gap: 8px; margin-bottom: 16px; }
+  .lib-add-row input { flex: 1; }
+  .lib-add-row select { width: 130px; flex-shrink: 0; }
+
+  .lib-table { width: 100%; border-collapse: collapse; }
+  .lib-table th {
+    font-size: 11.5px;
+    color: var(--text-3);
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: 0 12px 10px;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+  }
+  .lib-row { border-bottom: 1px solid var(--border); }
+  .lib-row:last-child { border-bottom: none; }
+  .lib-row td { padding: 9px 12px; vertical-align: middle; font-size: 13.5px; }
+  .lib-row:hover td { background: var(--stone-50); }
+  .lib-name { font-weight: 500; color: var(--text); }
+
+  /* ── Empty states ── */
+  .empty { text-align: center; padding: 32px; font-size: 13px; color: var(--text-3); font-style: italic; }
+
+  /* ── Responsive ── */
+  @media (max-width: 900px) {
+    .sidebar { width: 96px; }
+    .sidebar-logo, .nav-item span { display: none; }
+    .nav-item { justify-content: center; padding: 12px; }
+    .sidebar-footer { padding: 12px 10px 0; }
+    .sidebar-data-copy { display: none; }
+    .sidebar-data-actions .btn-ghost { font-size: 11px; padding: 8px 6px; }
+    .content { padding: 20px 16px; }
+    .metrics-row { grid-template-columns: 1fr 1fr; }
+    .form-layout { grid-template-columns: 1fr; }
+  }
+  @media (max-width: 600px) {
+    .metrics-row { grid-template-columns: 1fr 1fr; }
+    .topbar { padding: 0 16px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="app-shell">
+
+  <!-- Sidebar -->
+  <nav class="sidebar">
+    <div class="sidebar-logo">
+      <div class="sidebar-logo-mark">30 Plants</div>
+      <div class="sidebar-logo-sub">Weekly Tracker</div>
+    </div>
+    <div class="nav-item active" data-page="log">
+      <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+        <rect x="2" y="2" width="12" height="12" rx="2"/>
+        <path d="M5 8h6M8 5v6"/>
+      </svg>
+      <span>Log meal</span>
+    </div>
+    <div class="nav-item" data-page="history">
+      <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+        <circle cx="8" cy="8" r="6"/>
+        <path d="M8 5v3l2 2"/>
+      </svg>
+      <span>This week</span>
+    </div>
+    <div class="nav-item" data-page="library">
+      <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+        <path d="M3 3h4v10H3zM9 3h4v10H9z"/>
+      </svg>
+      <span>Plant library</span>
+    </div>
+    <div class="sidebar-footer">
+      <div class="sidebar-data">
+        <div class="sidebar-data-copy">Autosaved in browser</div>
+        <div class="sidebar-data-actions">
+          <button class="btn btn-ghost" id="export-btn">Export Logs</button>
+          <button class="btn btn-ghost" id="import-btn">Import Logs</button>
+          <input type="file" id="import-file" accept=".json,application/json" hidden>
+        </div>
+        <span class="data-status" id="data-status"></span>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Main -->
+  <div class="main">
+
+    <!-- Topbar -->
+    <div class="topbar">
+      <span class="topbar-title" id="page-title">Log meal</span>
+      <div class="topbar-week">
+        <label>Week</label>
+        <select id="week-sel"></select>
+      </div>
+    </div>
+
+    <div class="content">
+
+      <!-- Metrics -->
+      <div class="metrics-row">
+        <div class="metric-card">
+          <div class="metric-label">Unique plants</div>
+          <div class="metric-value accent" id="m-unique">0</div>
+          <div class="metric-bar"><div class="metric-bar-fill" id="m-bar" style="width:0%"></div></div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">Goal progress</div>
+          <div class="metric-value" id="m-pct">0%</div>
+          <div class="metric-sub" id="m-remaining">30 plants to go</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">Meals logged</div>
+          <div class="metric-value" id="m-meals">0</div>
+          <div class="metric-sub" id="m-days">0 days tracked</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">Most frequent</div>
+          <div class="metric-value" id="m-top" style="font-family:'DM Sans',sans-serif;font-size:16px;padding-top:6px">—</div>
+          <div class="metric-sub" id="m-top-ct"></div>
+        </div>
+      </div>
+
+      <!-- Log page -->
+      <div id="page-log" class="page active">
+        <div class="form-layout">
+
+          <div class="card">
+            <div class="card-header">
+              <span class="card-title" id="entry-form-title">Add meal entry</span>
+            </div>
+            <div class="card-body">
+              <div class="field">
+                <label>Date</label>
+                <input type="date" id="f-date">
+              </div>
+              <div class="field">
+                <label>Meal</label>
+                <select id="f-meal">
+                  <option>Breakfast</option>
+                  <option>Lunch</option>
+                  <option selected>Dinner</option>
+                  <option>Snacks</option>
+                </select>
+              </div>
+              <div class="field">
+                <label>Search &amp; add plants</label>
+                <div class="ac-wrap">
+                  <input type="text" id="f-plant-input" placeholder="Type a plant name..." autocomplete="off">
+                  <div class="ac-drop" id="ac-drop"></div>
+                </div>
+              </div>
+              <div class="chips-area" id="f-chips">
+                <span class="chips-empty">No plants added — search above or click from library</span>
+              </div>
+              <div class="form-actions">
+                <button class="btn btn-ghost" id="edit-cancel-btn" style="display:none">Cancel edit</button>
+                <button class="btn btn-primary" id="submit-btn">Save meal entry</button>
+              </div>
+              <div class="save-msg" id="save-msg"></div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-header">
+              <span class="card-title">Quick-add from library</span>
+              <span id="lib-quick-count" style="font-size:12px;color:var(--text-3)"></span>
+            </div>
+            <div class="card-body">
+              <div class="quick-grid" id="quick-grid"></div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- History page -->
+      <div id="page-history" class="page">
+        <div class="card" style="margin-bottom:20px">
+          <div class="card-header">
+            <span class="card-title">All unique plants this week</span>
+            <span id="h-unique-count" style="font-size:12px;color:var(--text-3)"></span>
+          </div>
+          <div class="card-body">
+            <div class="unique-pills" id="unique-pills"></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">Meal log</span>
+          </div>
+          <div class="card-body" style="padding-top:12px">
+            <table class="log-table">
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Meal</th>
+                  <th>Plants</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody id="log-tbody"></tbody>
+            </table>
+            <div id="log-empty" class="empty" style="display:none">No meals logged this week yet.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Library page -->
+      <div id="page-library" class="page">
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">Plant library</span>
+            <span id="lib-count" style="font-size:12px;color:var(--text-3)"></span>
+          </div>
+          <div class="card-body">
+            <div class="lib-add-row">
+              <input type="text" id="lib-input" placeholder="Add a new plant...">
+              <select id="lib-cat">
+                <option value="vegetable">Vegetable</option>
+                <option value="fruit">Fruit</option>
+                <option value="grain">Grain</option>
+                <option value="legume">Legume</option>
+                <option value="herb">Herb / Spice</option>
+                <option value="nut">Nut / Seed</option>
+                <option value="other">Other</option>
+              </select>
+              <button class="btn btn-ghost" id="lib-add-btn">Add</button>
+            </div>
+            <table class="lib-table">
+              <thead>
+                <tr>
+                  <th>Plant</th>
+                  <th>Category</th>
+                  <th>Times eaten<br><span style="text-transform:none;letter-spacing:0;font-weight:400;font-size:11px;color:var(--text-3)">this week</span></th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody id="lib-tbody"></tbody>
+            </table>
+            <div id="lib-empty" class="empty" style="display:none">Library is empty. Add some plants above.</div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /content -->
+  </div><!-- /main -->
+</div><!-- /app-shell -->
+
+<script>
+// ── State ────────────────────────────────────────────────────────────
+const CAT = {
+  vegetable: { label: 'Vegetable', bg: '#E8F5EE', border: '#C3E6D0', text: '#0E4F31' },
+  fruit:     { label: 'Fruit',     bg: '#FDF0EC', border: '#F5C4B3', text: '#7A2E10' },
+  grain:     { label: 'Grain',     bg: '#FDF6E3', border: '#FAC775', text: '#7A5A00' },
+  legume:    { label: 'Legume',    bg: '#EAF1FB', border: '#B5D4F4', text: '#0C3A6E' },
+  herb:      { label: 'Herb',      bg: '#F3F0FB', border: '#C9BFEE', text: '#3D2E8A' },
+  nut:       { label: 'Nut/Seed',  bg: '#FBF0F4', border: '#F4C0D1', text: '#7A2040' },
+  other:     { label: 'Other',     bg: '#F7F6F3', border: '#D9D6CE', text: '#4A4844' },
+};
+
+const GOAL = 30;
+const PORTABLE_DATA_VERSION = 1;
+
+const DEFAULT_LIBRARY = [
+  {name:'Spinach',cat:'vegetable'},{name:'Kale',cat:'vegetable'},{name:'Broccoli',cat:'vegetable'},
+  {name:'Carrot',cat:'vegetable'},{name:'Tomato',cat:'fruit'},{name:'Onion',cat:'vegetable'},
+  {name:'Garlic',cat:'herb'},{name:'Bell pepper',cat:'vegetable'},{name:'Mushroom',cat:'other'},
+  {name:'Sweet potato',cat:'vegetable'},{name:'Chickpeas',cat:'legume'},{name:'Lentils',cat:'legume'},
+  {name:'Black beans',cat:'legume'},{name:'Brown rice',cat:'grain'},{name:'Oats',cat:'grain'},
+  {name:'Quinoa',cat:'grain'},{name:'Almonds',cat:'nut'},{name:'Walnuts',cat:'nut'},
+  {name:'Flaxseed',cat:'nut'},{name:'Blueberries',cat:'fruit'},{name:'Banana',cat:'fruit'},
+  {name:'Apple',cat:'fruit'},{name:'Avocado',cat:'fruit'},{name:'Cucumber',cat:'vegetable'},
+  {name:'Zucchini',cat:'vegetable'},{name:'Turmeric',cat:'herb'},{name:'Ginger',cat:'herb'},
+  {name:'Basil',cat:'herb'},{name:'Celery',cat:'vegetable'},{name:'Cabbage',cat:'vegetable'},
+];
+
+const cloneDefaultLibrary = () => DEFAULT_LIBRARY.map(item => ({ ...item }));
+
+let appState = { library: [], meals: [] };
+try { appState = JSON.parse(localStorage.getItem('pt-app') || '{}'); } catch(e) {}
+if (!appState || typeof appState !== 'object') appState = {};
+if (!Array.isArray(appState.library)) appState.library = cloneDefaultLibrary();
+if (!Array.isArray(appState.meals)) appState.meals = [];
+
+const persist = () => { try { localStorage.setItem('pt-app', JSON.stringify(appState)); } catch(e) {} };
+
+// ── Helpers ───────────────────────────────────────────────────────────
+const toTitle = s => s.trim().replace(/\b\w/g, c => c.toUpperCase());
+const fmtDate = iso => { const d = new Date(iso + 'T00:00:00'); return d.toLocaleDateString('en-US', {weekday:'short', month:'short', day:'numeric'}); };
+const getWeekStart = d => { const dd = new Date(d); dd.setDate(dd.getDate() - dd.getDay()); return dd.toISOString().slice(0,10); };
+const todayISO = new Date().toISOString().slice(0,10);
+const getMealWeek = meal => meal.week || getWeekStart(new Date(meal.date + 'T00:00:00'));
+const isISODate = value => {
+  if (typeof value !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+  const [year, month, day] = value.split('-').map(Number);
+  const date = new Date(Date.UTC(year, month - 1, day));
+  return date.getUTCFullYear() === year && date.getUTCMonth() === month - 1 && date.getUTCDate() === day;
+};
+const getLatestMealWeek = meals => meals.reduce((latest, meal) => {
+  const week = getMealWeek(meal);
+  return !latest || week > latest ? week : latest;
+}, '');
+
+let currentWeek = getWeekStart(new Date());
+let selectedPlants = [];
+let acIndex = -1;
+let editingMealId = null;
+let saveMsgTimer = null;
+let dataStatusTimer = null;
+
+const dateInput = document.getElementById('f-date');
+const mealInput = document.getElementById('f-meal');
+const plantInput = document.getElementById('f-plant-input');
+const submitBtn = document.getElementById('submit-btn');
+const cancelEditBtn = document.getElementById('edit-cancel-btn');
+const formTitle = document.getElementById('entry-form-title');
+const saveMsg = document.getElementById('save-msg');
+const exportBtn = document.getElementById('export-btn');
+const importBtn = document.getElementById('import-btn');
+const importFileInput = document.getElementById('import-file');
+const dataStatus = document.getElementById('data-status');
+
+// ── Week selector ─────────────────────────────────────────────────────
+const weekSel = document.getElementById('week-sel');
+function renderWeekOptions() {
+  const weeks = new Set();
+  for (let i = -3; i <= 4; i++) {
+    const d = new Date(); d.setDate(d.getDate() + i * 7);
+    weeks.add(getWeekStart(d));
+  }
+  appState.meals.forEach(m => weeks.add(getMealWeek(m)));
+  weeks.add(currentWeek);
+  weekSel.innerHTML = '';
+  [...weeks].sort().forEach(w => {
+    const weekStart = new Date(w + 'T00:00:00');
+    const weekEnd = new Date(w + 'T00:00:00'); weekEnd.setDate(weekEnd.getDate() + 6);
+    const mon = weekStart;
+    const sun = weekEnd;
+    const o = { month: 'short', day: 'numeric' };
+    const opt = document.createElement('option');
+    opt.value = w;
+    opt.textContent = mon.toLocaleDateString('en-US', o) + ' – ' + sun.toLocaleDateString('en-US', o);
+    if (w === currentWeek) opt.selected = true;
+    weekSel.appendChild(opt);
+  });
+}
+renderWeekOptions();
+weekSel.addEventListener('change', () => { currentWeek = weekSel.value; renderAll(); });
+
+// ── Filtered data ─────────────────────────────────────────────────────
+const weekMeals = () => appState.meals.filter(m => getMealWeek(m) === currentWeek);
+const formWeek = () => dateInput.value ? getWeekStart(new Date(dateInput.value + 'T00:00:00')) : currentWeek;
+const formWeekMeals = () => appState.meals.filter(m => getMealWeek(m) === formWeek() && m.id !== editingMealId);
+const uniquePlants = () => { const s = new Set(); weekMeals().forEach(m => m.plants.forEach(p => s.add(p))); return s; };
+const plantFreq = () => { const f = {}; weekMeals().forEach(m => m.plants.forEach(p => { f[p] = (f[p]||0)+1; })); return f; };
+
+// ── Metrics ───────────────────────────────────────────────────────────
+function renderMetrics() {
+  const u = uniquePlants(); const cnt = u.size;
+  document.getElementById('m-unique').textContent = cnt;
+  const pct = Math.min(100, Math.round(cnt / GOAL * 100));
+  document.getElementById('m-pct').textContent = pct + '%';
+  document.getElementById('m-bar').style.width = pct + '%';
+  document.getElementById('m-remaining').textContent = cnt >= GOAL ? '🎉 Goal reached!' : (GOAL - cnt) + ' plants to go';
+  const wm = weekMeals();
+  document.getElementById('m-meals').textContent = wm.length;
+  const days = new Set(wm.map(m => m.date)).size;
+  document.getElementById('m-days').textContent = days + (days === 1 ? ' day tracked' : ' days tracked');
+  const freq = plantFreq();
+  const top = Object.entries(freq).sort((a,b) => b[1]-a[1])[0];
+  document.getElementById('m-top').textContent = top ? top[0] : '—';
+  document.getElementById('m-top-ct').textContent = top ? '×' + top[1] + ' this week' : '';
+}
+
+// ── Quick library ─────────────────────────────────────────────────────
+function renderQuickLib() {
+  const el = document.getElementById('quick-grid');
+  el.innerHTML = '';
+  document.getElementById('lib-quick-count').textContent = appState.library.length + ' plants';
+  if (!appState.library.length) { el.innerHTML = '<span style="font-size:13px;color:var(--text-3);font-style:italic">Library is empty</span>'; return; }
+  [...appState.library].sort((a,b) => a.name.localeCompare(b.name)).forEach(p => {
+    const col = CAT[p.cat] || CAT.other;
+    const el2 = document.createElement('button');
+    el2.style.cssText = `display:inline-flex;align-items:center;background:${col.bg};border:1px solid ${col.border};color:${col.text};border-radius:99px;padding:5px 13px;font-size:12.5px;font-weight:500;cursor:pointer;font-family:'DM Sans',sans-serif;transition:filter 0.12s;`;
+    el2.textContent = p.name;
+    el2.title = 'Add to meal';
+    el2.onmouseenter = () => el2.style.filter = 'brightness(0.95)';
+    el2.onmouseleave = () => el2.style.filter = '';
+    el2.onclick = () => addChip(p.name);
+    el.appendChild(el2);
+  });
+}
+
+// ── Chips ─────────────────────────────────────────────────────────────
+function renderChips() {
+  const el = document.getElementById('f-chips');
+  el.innerHTML = '';
+  if (!selectedPlants.length) { el.innerHTML = '<span class="chips-empty">No plants added — search above or click from library</span>'; return; }
+  const u = new Set();
+  formWeekMeals().forEach(m => m.plants.forEach(p => u.add(p)));
+  selectedPlants.forEach(name => {
+    const chip = document.createElement('div');
+    chip.className = 'chip' + (u.has(name) ? ' dup' : '');
+    chip.title = u.has(name) ? name + ' already counted this week' : name;
+    chip.innerHTML = name + '<span class="chip-x" data-name="' + name + '">×</span>';
+    chip.querySelector('.chip-x').onclick = () => { selectedPlants = selectedPlants.filter(x => x !== name); renderChips(); };
+    el.appendChild(chip);
+  });
+}
+
+function addChip(name) {
+  const n = toTitle(name);
+  if (!n || selectedPlants.includes(n)) return;
+  selectedPlants.push(n);
+  renderChips();
+  plantInput.value = '';
+  hideAC();
+}
+
+// ── Autocomplete ──────────────────────────────────────────────────────
+function renderAC(query) {
+  const drop = document.getElementById('ac-drop');
+  const q = query.toLowerCase().trim();
+  if (!q) { drop.style.display = 'none'; return; }
+  const libNames = appState.library.map(p => p.name);
+  const matches = libNames.filter(n => n.toLowerCase().includes(q) && !selectedPlants.includes(n));
+  const isNew = !libNames.map(n => n.toLowerCase()).includes(q);
+  drop.innerHTML = '';
+  acIndex = -1;
+  matches.slice(0, 7).forEach(n => {
+    const d = document.createElement('div'); d.className = 'ac-item'; d.textContent = n;
+    d.onmousedown = e => { e.preventDefault(); addChip(n); };
+    drop.appendChild(d);
+  });
+  if (isNew && q) {
+    const d = document.createElement('div'); d.className = 'ac-item new-item';
+    d.textContent = 'Add "' + toTitle(query) + '" as new plant';
+    d.onmousedown = e => { e.preventDefault(); addChip(query); };
+    drop.appendChild(d);
+  }
+  drop.style.display = drop.children.length ? 'block' : 'none';
+}
+function hideAC() { const d = document.getElementById('ac-drop'); d.style.display = 'none'; acIndex = -1; }
+
+plantInput.addEventListener('input', e => renderAC(e.target.value));
+plantInput.addEventListener('keydown', e => {
+  const drop = document.getElementById('ac-drop');
+  const items = [...drop.querySelectorAll('.ac-item')];
+  if (e.key === 'ArrowDown') { e.preventDefault(); acIndex = Math.min(acIndex+1, items.length-1); items.forEach((i,n) => i.classList.toggle('active', n === acIndex)); }
+  else if (e.key === 'ArrowUp') { e.preventDefault(); acIndex = Math.max(acIndex-1, 0); items.forEach((i,n) => i.classList.toggle('active', n === acIndex)); }
+  else if (e.key === 'Enter') { e.preventDefault(); if (acIndex >= 0 && items[acIndex]) items[acIndex].onmousedown(e); else if (e.target.value.trim()) { addChip(e.target.value); e.target.value = ''; hideAC(); } }
+  else if (e.key === 'Escape') hideAC();
+});
+plantInput.addEventListener('blur', () => setTimeout(hideAC, 160));
+dateInput.addEventListener('change', renderChips);
+
+function showDataStatus(text, color = 'var(--text-2)', clearAfter = 3200) {
+  dataStatus.style.color = color;
+  dataStatus.textContent = text;
+  clearTimeout(dataStatusTimer);
+  if (clearAfter > 0) {
+    dataStatusTimer = setTimeout(() => {
+      if (dataStatus.textContent === text) dataStatus.textContent = '';
+    }, clearAfter);
+  }
+}
+
+// ── Submit meal ───────────────────────────────────────────────────────
+function showSaveMessage(text, color, clearAfter = 2500) {
+  saveMsg.style.color = color;
+  saveMsg.textContent = text;
+  clearTimeout(saveMsgTimer);
+  if (clearAfter > 0) {
+    saveMsgTimer = setTimeout(() => {
+      if (saveMsg.textContent === text) saveMsg.textContent = '';
+    }, clearAfter);
+  }
+}
+
+function resetEntryForm() {
+  editingMealId = null;
+  selectedPlants = [];
+  dateInput.value = todayISO;
+  mealInput.value = 'Dinner';
+  plantInput.value = '';
+  formTitle.textContent = 'Add meal entry';
+  submitBtn.textContent = 'Save meal entry';
+  cancelEditBtn.style.display = 'none';
+  clearTimeout(saveMsgTimer);
+  saveMsg.textContent = '';
+  hideAC();
+  renderChips();
+}
+
+function normalizeLibraryItem(item) {
+  if (!item || typeof item !== 'object') throw new Error('Imported library contains an invalid entry.');
+  const name = toTitle(String(item.name || ''));
+  if (!name) throw new Error('Imported library contains an item with no name.');
+  const cat = typeof item.cat === 'string' && CAT[item.cat] ? item.cat : 'other';
+  return { name, cat };
+}
+
+function normalizeMealItem(item) {
+  if (!item || typeof item !== 'object') throw new Error('Imported meals contain an invalid entry.');
+  const id = typeof item.id === 'number' ? item.id : Number(item.id);
+  const date = typeof item.date === 'string' ? item.date.trim() : '';
+  const meal = typeof item.meal === 'string' ? item.meal.trim() : '';
+  const plants = Array.isArray(item.plants)
+    ? [...new Set(item.plants.map(p => toTitle(String(p || ''))).filter(Boolean))]
+    : [];
+  if (!Number.isFinite(id)) throw new Error('Imported meals must include a numeric id.');
+  if (!isISODate(date)) throw new Error('Imported meals must include a valid date.');
+  if (!meal) throw new Error('Imported meals must include a meal label.');
+  if (!plants.length) throw new Error('Imported meals must include at least one plant.');
+  const week = isISODate(item.week) ? item.week : getWeekStart(new Date(date + 'T00:00:00'));
+  return { id, date, week, meal, plants };
+}
+
+function normalizePortableState(payload) {
+  if (!payload || typeof payload !== 'object') throw new Error('Selected file is not a valid Planterly export.');
+  if (payload.version !== PORTABLE_DATA_VERSION) throw new Error('This export version is not supported.');
+  if (!Array.isArray(payload.library) || !Array.isArray(payload.meals)) throw new Error('Export file is missing library or meals data.');
+  const library = payload.library.map(normalizeLibraryItem);
+  const meals = payload.meals.map(normalizeMealItem);
+  const seenIds = new Set();
+  meals.forEach(meal => {
+    if (seenIds.has(meal.id)) throw new Error('Imported meals contain duplicate ids.');
+    seenIds.add(meal.id);
+  });
+  return { library, meals };
+}
+
+function buildPortableExport() {
+  return {
+    version: PORTABLE_DATA_VERSION,
+    exportedAt: new Date().toISOString(),
+    library: appState.library.map(item => ({ name: item.name, cat: item.cat })),
+    meals: appState.meals.map(meal => ({
+      id: meal.id,
+      date: meal.date,
+      week: getMealWeek(meal),
+      meal: meal.meal,
+      plants: [...meal.plants],
+    })),
+  };
+}
+
+function applyImportedState(nextState) {
+  appState = nextState;
+  persist();
+  currentWeek = nextState.meals.length ? getLatestMealWeek(nextState.meals) : getWeekStart(new Date());
+  renderWeekOptions();
+  weekSel.value = currentWeek;
+  resetEntryForm();
+  renderAll();
+}
+
+function startEditingEntry(entry) {
+  editingMealId = entry.id;
+  dateInput.value = entry.date;
+  mealInput.value = entry.meal;
+  selectedPlants = [...entry.plants];
+  plantInput.value = '';
+  formTitle.textContent = 'Edit meal entry';
+  submitBtn.textContent = 'Update meal entry';
+  cancelEditBtn.style.display = 'inline-flex';
+  hideAC();
+  renderChips();
+  showSaveMessage('Editing meal entry.', 'var(--text-2)', 0);
+}
+
+dateInput.value = todayISO;
+submitBtn.onclick = () => {
+  const date = dateInput.value;
+  const meal = mealInput.value;
+  const wasEditing = editingMealId !== null;
+  if (!date) { showSaveMessage('Please select a date.', '#C0392B', 0); return; }
+  if (!selectedPlants.length) { showSaveMessage('Add at least one plant first.', '#C0392B', 0); return; }
+  const weekKey = getWeekStart(new Date(date + 'T00:00:00'));
+  const entryId = editingMealId ?? Date.now();
+  const entry = { id: entryId, date, week: weekKey, meal, plants: [...selectedPlants] };
+  const existingIdx = appState.meals.findIndex(m => m.id === entryId);
+  if (existingIdx === -1) appState.meals.push(entry);
+  else appState.meals[existingIdx] = entry;
+  persist();
+  currentWeek = weekKey;
+  renderWeekOptions();
+  weekSel.value = weekKey;
+  resetEntryForm();
+  showSaveMessage(wasEditing ? 'Meal updated!' : 'Meal saved!', '#1A7A4E');
+  renderAll();
+};
+cancelEditBtn.onclick = resetEntryForm;
+
+exportBtn.onclick = () => {
+  const payload = JSON.stringify(buildPortableExport(), null, 2);
+  const blob = new Blob([payload], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = `planterly-logs-${new Date().toISOString().slice(0,10)}.json`;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
+  showDataStatus('Logs exported to a JSON file.', '#1A7A4E');
+};
+
+importBtn.onclick = () => importFileInput.click();
+importFileInput.addEventListener('change', async event => {
+  const file = event.target.files?.[0];
+  if (!file) return;
+  try {
+    if (!file.name.toLowerCase().endsWith('.json')) throw new Error('Please choose a .json export file.');
+    const payload = JSON.parse(await file.text());
+    const nextState = normalizePortableState(payload);
+    applyImportedState(nextState);
+    showDataStatus('Logs imported. Current data was replaced.', '#1A7A4E');
+  } catch (error) {
+    const message = error instanceof SyntaxError ? 'Could not read that JSON file.' : (error.message || 'Import failed.');
+    showDataStatus(message, '#C0392B', 4500);
+  } finally {
+    importFileInput.value = '';
+  }
+});
+
+// ── History ───────────────────────────────────────────────────────────
+function renderHistory() {
+  const u = uniquePlants();
+  const pillsEl = document.getElementById('unique-pills');
+  pillsEl.innerHTML = '';
+  document.getElementById('h-unique-count').textContent = u.size + ' / ' + GOAL;
+  if (!u.size) {
+    pillsEl.innerHTML = '<span style="font-size:13px;color:var(--text-3);font-style:italic">No plants logged yet this week</span>';
+  } else {
+    [...u].sort().forEach(p => { const s = document.createElement('span'); s.className = 'u-pill'; s.textContent = p; pillsEl.appendChild(s); });
+  }
+
+  const tbody = document.getElementById('log-tbody');
+  tbody.innerHTML = '';
+  const wm = weekMeals().slice().sort((a, b) => b.date.localeCompare(a.date) || b.id - a.id);
+  const empty = document.getElementById('log-empty');
+  if (!wm.length) { empty.style.display = 'block'; return; }
+  empty.style.display = 'none';
+  wm.forEach(entry => {
+    const tr = document.createElement('tr'); tr.className = 'log-row';
+    const plantsHtml = entry.plants.map(p => `<span class="lp">${p}</span>`).join('');
+    tr.innerHTML = `
+      <td class="log-date">${fmtDate(entry.date)}</td>
+      <td><span class="log-meal-badge">${entry.meal}</span></td>
+      <td><div class="log-plants-cell">${plantsHtml}</div></td>
+      <td>
+        <div class="log-actions">
+          <button class="btn btn-secondary" data-action="edit">Edit</button>
+          <button class="btn btn-danger" data-action="remove">Remove</button>
+        </div>
+      </td>
+    `;
+    tr.querySelector('[data-action="edit"]').onclick = () => {
+      startEditingEntry(entry);
+      setActivePage('log');
+      window.scrollTo(0, 0);
+    };
+    tr.querySelector('[data-action="remove"]').onclick = () => {
+      appState.meals = appState.meals.filter(m => m.id !== entry.id);
+      if (editingMealId === entry.id) resetEntryForm();
+      persist(); renderAll();
+    };
+    tbody.appendChild(tr);
+  });
+}
+
+// ── Library ───────────────────────────────────────────────────────────
+function renderLibrary() {
+  const tbody = document.getElementById('lib-tbody');
+  tbody.innerHTML = '';
+  const empty = document.getElementById('lib-empty');
+  document.getElementById('lib-count').textContent = appState.library.length + ' plants';
+  if (!appState.library.length) { empty.style.display = 'block'; return; }
+  empty.style.display = 'none';
+  const freq = plantFreq();
+  [...appState.library].sort((a,b) => a.name.localeCompare(b.name)).forEach(p => {
+    const col = CAT[p.cat] || CAT.other;
+    const tr = document.createElement('tr'); tr.className = 'lib-row';
+    const ct = freq[p.name] || 0;
+    tr.innerHTML = `
+      <td class="lib-name">${p.name}</td>
+      <td><span class="cat-pill" style="background:${col.bg};border:1px solid ${col.border};color:${col.text}">${col.label}</span></td>
+      <td style="color:var(--text-2)">${ct > 0 ? '<strong>×' + ct + '</strong>' : '—'}</td>
+      <td><button class="btn btn-danger" data-name="${p.name}">Remove</button></td>
+    `;
+    tr.querySelector('.btn-danger').onclick = () => {
+      appState.library = appState.library.filter(x => x.name !== p.name);
+      persist(); renderAll();
+    };
+    tbody.appendChild(tr);
+  });
+}
+
+document.getElementById('lib-add-btn').onclick = () => {
+  const inp = document.getElementById('lib-input');
+  const name = toTitle(inp.value);
+  const cat = document.getElementById('lib-cat').value;
+  if (!name) return;
+  if (appState.library.find(p => p.name.toLowerCase() === name.toLowerCase())) { inp.value = ''; return; }
+  appState.library.push({ name, cat });
+  persist(); inp.value = ''; renderAll();
+};
+document.getElementById('lib-input').addEventListener('keydown', e => { if (e.key === 'Enter') document.getElementById('lib-add-btn').click(); });
+
+// ── Navigation ────────────────────────────────────────────────────────
+const PAGE_TITLES = { log: 'Log meal', history: 'This week', library: 'Plant library' };
+function setActivePage(page) {
+  document.querySelectorAll('.nav-item').forEach(item => item.classList.toggle('active', item.dataset.page === page));
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('page-' + page).classList.add('active');
+  document.getElementById('page-title').textContent = PAGE_TITLES[page];
+  if (page === 'history') renderHistory();
+  if (page === 'library') renderLibrary();
+}
+
+document.querySelectorAll('.nav-item').forEach(item => {
+  item.addEventListener('click', () => setActivePage(item.dataset.page));
+});
+
+// ── Master render ─────────────────────────────────────────────────────
+function renderAll() {
+  renderMetrics();
+  renderQuickLib();
+  renderChips();
+  const activePage = document.querySelector('.nav-item.active')?.dataset.page;
+  if (activePage === 'history') renderHistory();
+  if (activePage === 'library') renderLibrary();
+}
+
+renderAll();
+</script>
+</body>
+</html>

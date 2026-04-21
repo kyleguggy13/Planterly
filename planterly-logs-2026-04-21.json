@@ -1,0 +1,173 @@
+{
+  "version": 1,
+  "exportedAt": "2026-04-21T03:35:55.354Z",
+  "library": [
+    {
+      "name": "Spinach",
+      "cat": "vegetable"
+    },
+    {
+      "name": "Kale",
+      "cat": "vegetable"
+    },
+    {
+      "name": "Broccoli",
+      "cat": "vegetable"
+    },
+    {
+      "name": "Carrot",
+      "cat": "vegetable"
+    },
+    {
+      "name": "Tomato",
+      "cat": "fruit"
+    },
+    {
+      "name": "Onion",
+      "cat": "vegetable"
+    },
+    {
+      "name": "Garlic",
+      "cat": "herb"
+    },
+    {
+      "name": "Bell pepper",
+      "cat": "vegetable"
+    },
+    {
+      "name": "Mushroom",
+      "cat": "other"
+    },
+    {
+      "name": "Sweet potato",
+      "cat": "vegetable"
+    },
+    {
+      "name": "Chickpeas",
+      "cat": "legume"
+    },
+    {
+      "name": "Lentils",
+      "cat": "legume"
+    },
+    {
+      "name": "Black beans",
+      "cat": "legume"
+    },
+    {
+      "name": "Brown rice",
+      "cat": "grain"
+    },
+    {
+      "name": "Oats",
+      "cat": "grain"
+    },
+    {
+      "name": "Quinoa",
+      "cat": "grain"
+    },
+    {
+      "name": "Almonds",
+      "cat": "nut"
+    },
+    {
+      "name": "Walnuts",
+      "cat": "nut"
+    },
+    {
+      "name": "Flaxseed",
+      "cat": "nut"
+    },
+    {
+      "name": "Blueberries",
+      "cat": "fruit"
+    },
+    {
+      "name": "Banana",
+      "cat": "fruit"
+    },
+    {
+      "name": "Apple",
+      "cat": "fruit"
+    },
+    {
+      "name": "Avocado",
+      "cat": "fruit"
+    },
+    {
+      "name": "Cucumber",
+      "cat": "vegetable"
+    },
+    {
+      "name": "Zucchini",
+      "cat": "vegetable"
+    },
+    {
+      "name": "Turmeric",
+      "cat": "herb"
+    },
+    {
+      "name": "Ginger",
+      "cat": "herb"
+    },
+    {
+      "name": "Basil",
+      "cat": "herb"
+    },
+    {
+      "name": "Celery",
+      "cat": "vegetable"
+    },
+    {
+      "name": "Cabbage",
+      "cat": "vegetable"
+    },
+    {
+      "name": "Shallot",
+      "cat": "vegetable"
+    }
+  ],
+  "meals": [
+    {
+      "id": 1776739462235,
+      "date": "2026-04-20",
+      "week": "2026-04-20",
+      "meal": "Lunch",
+      "plants": [
+        "Carrot"
+      ]
+    },
+    {
+      "id": 1776739584027,
+      "date": "2026-04-20",
+      "week": "2026-04-20",
+      "meal": "Dinner",
+      "plants": [
+        "Endive"
+      ]
+    },
+    {
+      "id": 1776739631330,
+      "date": "2026-04-21",
+      "week": "2026-04-20",
+      "meal": "Breakfast",
+      "plants": [
+        "Peanuts",
+        "Chia",
+        "Hemp",
+        "Oats"
+      ]
+    },
+    {
+      "id": 1776739657585,
+      "date": "2026-04-21",
+      "week": "2026-04-20",
+      "meal": "Dinner",
+      "plants": [
+        "Garlic",
+        "Shallot",
+        "Spinach"
+      ]
+    }
+  ]
+}
