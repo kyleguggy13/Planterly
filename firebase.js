@@ -2,7 +2,7 @@
 
 // Import the functions you need from the SDKs you need
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
-import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-analytics.js";
+// import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-analytics.js";
 // TODO: Add SDKs for Firebase products that you want to use
 // https://firebase.google.com/docs/web/setup#available-libraries
 
@@ -26,11 +26,19 @@ import {
 
 // Your web app's Firebase configuration
 // For Firebase JS SDK v7.20.0 and later, measurementId is optional
-
+const firebaseConfig = {
+  apiKey: "AIzaSyAgaTsP4ExxzHisv8-V-sUy1XK29azD7eI",
+  authDomain: "planterly-data.firebaseapp.com",
+  projectId: "planterly-data",
+  storageBucket: "planterly-data.firebasestorage.app",
+  messagingSenderId: "275892702436",
+  appId: "1:275892702436:web:a03a7cfc3c5b91ab9ef0f1",
+  measurementId: "G-XHD08RYSXP"
+};
 
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
-const analytics = getAnalytics(app);
+// const analytics = getAnalytics(app);
 
 // Initialize services
 export const auth = getAuth(app);

@@ -1,9 +1,18 @@
+// console.log("app.js loaded");
+
+// const testLoginBtn = document.getElementById("loginBtn");
+// console.log("loginBtn found:", testLoginBtn);
+
+// testLoginBtn.addEventListener("click", () => {
+//   console.log("Login button clicked");
+//   alert("Login button clicked");
+// });
+
+
 import {
   signInWithGoogle,
   logOut,
-  watchAuth,
-  saveUserTestData,
-  loadUserTestData
+  watchAuth
 } from "./firebase.js";
 
 const loginBtn = document.getElementById("loginBtn");
