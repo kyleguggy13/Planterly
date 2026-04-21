@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>30 Plants — Weekly Tracker</title>
+<title>Planterly</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/style.css">
 </head>
@@ -63,7 +63,6 @@
       <div id="accountControls">
         <button class="btn btn-ghost" id="loginBtn">Sign in with Google</button>
         <button class="btn btn-ghost" id="logoutBtn" style="display:none;">Sign out</button>
-        <button id="testSaveBtn" style="display:none;">Test Firebase Save</button>
         <span id="userStatus">Not signed in</span>
       </div>
     </div>
@@ -339,6 +338,48 @@ const importBtn = document.getElementById('import-btn');
 const importFileInput = document.getElementById('import-file');
 const dataStatus = document.getElementById('data-status');
 
+const hasRemoteSync = () => Boolean(window.planterlySync?.isSignedIn?.());
+const ensureRemoteSyncReady = () => {
+  if (hasRemoteSync() && !window.planterlySync?.isReady?.()) {
+    throw new Error('Cloud sync is still starting. Please try again in a moment.');
+  }
+};
+const cloneStateSnapshot = () => ({
+  library: appState.library.map(item => ({ name: item.name, cat: item.cat })),
+  meals: appState.meals.map(meal => ({
+    id: meal.id,
+    date: meal.date,
+    week: getMealWeek(meal),
+    meal: meal.meal,
+    plants: [...meal.plants],
+  })),
+});
+async function saveMealEntryRemote(entry) {
+  if (!hasRemoteSync()) return;
+  ensureRemoteSyncReady();
+  await window.planterlySync.saveMealEntry(entry);
+}
+async function deleteMealEntryRemote(mealId) {
+  if (!hasRemoteSync()) return;
+  ensureRemoteSyncReady();
+  await window.planterlySync.deleteMealEntry(mealId);
+}
+async function saveLibraryItemRemote(item) {
+  if (!hasRemoteSync()) return;
+  ensureRemoteSyncReady();
+  await window.planterlySync.saveLibraryItem(item);
+}
+async function deleteLibraryItemRemote(name) {
+  if (!hasRemoteSync()) return;
+  ensureRemoteSyncReady();
+  await window.planterlySync.deleteLibraryItem(name);
+}
+async function replaceRemoteStateSnapshot(nextState) {
+  if (!hasRemoteSync()) return;
+  ensureRemoteSyncReady();
+  await window.planterlySync.replaceRemoteState(nextState);
+}
+
 // ── Week selector ─────────────────────────────────────────────────────
 const weekSel = document.getElementById('week-sel');
 function renderWeekOptions() {
@@ -549,6 +590,15 @@ function normalizePortableState(payload) {
   return { library, meals };
 }
 
+function normalizeAppStateSnapshot(snapshot) {
+  if (!snapshot || typeof snapshot !== 'object') throw new Error('App state is invalid.');
+  if (!Array.isArray(snapshot.library) || !Array.isArray(snapshot.meals)) throw new Error('App state is missing library or meals data.');
+  return {
+    library: snapshot.library.map(normalizeLibraryItem),
+    meals: snapshot.meals.map(normalizeMealItem),
+  };
+}
+
 function buildPortableExport() {
   return {
     version: PORTABLE_DATA_VERSION,
@@ -565,14 +615,24 @@ function buildPortableExport() {
 }
 
 function applyImportedState(nextState) {
-  appState = nextState;
+  const normalizedState = normalizeAppStateSnapshot(nextState);
+  appState = normalizedState;
   persist();
-  currentWeek = nextState.meals.length ? getLatestMealWeek(nextState.meals) : getWeekStart(new Date());
+  currentWeek = normalizedState.meals.length ? getLatestMealWeek(normalizedState.meals) : getWeekStart(new Date());
   renderWeekOptions();
   weekSel.value = currentWeek;
   resetEntryForm();
   renderAll();
 }
+
+window.planterlyApp = {
+  getStateSnapshot() {
+    return cloneStateSnapshot();
+  },
+  applyRemoteState(nextState) {
+    applyImportedState(nextState);
+  },
+};
 
 function startEditingEntry(entry) {
   editingMealId = entry.id;
@@ -589,7 +649,7 @@ function startEditingEntry(entry) {
 }
 
 dateInput.value = todayISO;
-submitBtn.onclick = () => {
+submitBtn.onclick = async () => {
   const date = dateInput.value;
   const meal = mealInput.value;
   const wasEditing = editingMealId !== null;
@@ -598,16 +658,21 @@ submitBtn.onclick = () => {
   const weekKey = getWeekStart(new Date(date + 'T00:00:00'));
   const entryId = editingMealId ?? Date.now();
   const entry = { id: entryId, date, week: weekKey, meal, plants: [...selectedPlants] };
-  const existingIdx = appState.meals.findIndex(m => m.id === entryId);
-  if (existingIdx === -1) appState.meals.push(entry);
-  else appState.meals[existingIdx] = entry;
-  persist();
-  currentWeek = weekKey;
-  renderWeekOptions();
-  weekSel.value = weekKey;
-  resetEntryForm();
-  showSaveMessage(wasEditing ? 'Meal updated!' : 'Meal saved!', '#1A7A4E');
-  renderAll();
+  try {
+    await saveMealEntryRemote(entry);
+    const existingIdx = appState.meals.findIndex(m => m.id === entryId);
+    if (existingIdx === -1) appState.meals.push(entry);
+    else appState.meals[existingIdx] = entry;
+    persist();
+    currentWeek = weekKey;
+    renderWeekOptions();
+    weekSel.value = weekKey;
+    resetEntryForm();
+    showSaveMessage(wasEditing ? 'Meal updated!' : 'Meal saved!', '#1A7A4E');
+    renderAll();
+  } catch (error) {
+    showSaveMessage(error.message || 'Meal save failed.', '#C0392B', 4500);
+  }
 };
 cancelEditBtn.onclick = resetEntryForm;
 
@@ -633,6 +698,7 @@ importFileInput.addEventListener('change', async event => {
     if (!file.name.toLowerCase().endsWith('.json')) throw new Error('Please choose a .json export file.');
     const payload = JSON.parse(await file.text());
     const nextState = normalizePortableState(payload);
+    await replaceRemoteStateSnapshot(nextState);
     applyImportedState(nextState);
     showDataStatus('Logs imported. Current data was replaced.', '#1A7A4E');
   } catch (error) {
@@ -680,10 +746,17 @@ function renderHistory() {
       setActivePage('log');
       window.scrollTo(0, 0);
     };
-    tr.querySelector('[data-action="remove"]').onclick = () => {
-      appState.meals = appState.meals.filter(m => m.id !== entry.id);
-      if (editingMealId === entry.id) resetEntryForm();
-      persist(); renderAll();
+    tr.querySelector('[data-action="remove"]').onclick = async () => {
+      try {
+        await deleteMealEntryRemote(entry.id);
+        appState.meals = appState.meals.filter(m => m.id !== entry.id);
+        if (editingMealId === entry.id) resetEntryForm();
+        persist();
+        renderAll();
+        showDataStatus('Meal removed.', '#1A7A4E');
+      } catch (error) {
+        showDataStatus(error.message || 'Meal removal failed.', '#C0392B', 4500);
+      }
     };
     tbody.appendChild(tr);
   });
@@ -708,22 +781,37 @@ function renderLibrary() {
       <td style="color:var(--text-2)">${ct > 0 ? '<strong>×' + ct + '</strong>' : '—'}</td>
       <td><button class="btn btn-danger" data-name="${p.name}">Remove</button></td>
     `;
-    tr.querySelector('.btn-danger').onclick = () => {
-      appState.library = appState.library.filter(x => x.name !== p.name);
-      persist(); renderAll();
+    tr.querySelector('.btn-danger').onclick = async () => {
+      try {
+        await deleteLibraryItemRemote(p.name);
+        appState.library = appState.library.filter(x => x.name !== p.name);
+        persist();
+        renderAll();
+        showDataStatus('Plant removed.', '#1A7A4E');
+      } catch (error) {
+        showDataStatus(error.message || 'Plant removal failed.', '#C0392B', 4500);
+      }
     };
     tbody.appendChild(tr);
   });
 }
 
-document.getElementById('lib-add-btn').onclick = () => {
+document.getElementById('lib-add-btn').onclick = async () => {
   const inp = document.getElementById('lib-input');
   const name = toTitle(inp.value);
   const cat = document.getElementById('lib-cat').value;
   if (!name) return;
   if (appState.library.find(p => p.name.toLowerCase() === name.toLowerCase())) { inp.value = ''; return; }
-  appState.library.push({ name, cat });
-  persist(); inp.value = ''; renderAll();
+  const libraryItem = { name, cat };
+  try {
+    await saveLibraryItemRemote(libraryItem);
+    appState.library.push(libraryItem);
+    persist();
+    inp.value = '';
+    renderAll();
+  } catch (error) {
+    showDataStatus(error.message || 'Plant save failed.', '#C0392B', 4500);
+  }
 };
 document.getElementById('lib-input').addEventListener('keydown', e => { if (e.key === 'Enter') document.getElementById('lib-add-btn').click(); });
 

@@ -19,6 +19,7 @@ import {
   collection,
   doc,
   setDoc,
+  deleteDoc,
   getDocs,
   serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
@@ -62,6 +63,14 @@ export function watchAuth(callback) {
   return onAuthStateChanged(auth, callback);
 }
 
+export function getPlantDocId(name) {
+  return String(name || "")
+    .trim()
+    .toLowerCase()
+    .replace(/[\/\\]+/g, "-")
+    .replace(/\s+/g, "-");
+}
+
 // Save one meal
 export async function saveMeal(uid, mealId, mealData) {
   const mealRef = doc(db, "users", uid, "meals", mealId);
@@ -82,15 +91,33 @@ export async function savePlant(uid, plantId, plantData) {
   }, { merge: true });
 }
 
+export async function deleteMeal(uid, mealId) {
+  const mealRef = doc(db, "users", uid, "meals", mealId);
+  await deleteDoc(mealRef);
+}
+
+export async function deletePlant(uid, plantId) {
+  const plantRef = doc(db, "users", uid, "library", plantId);
+  await deleteDoc(plantRef);
+}
+
 // Load all meals
 export async function loadMeals(uid) {
   const mealsRef = collection(db, "users", uid, "meals");
   const snapshot = await getDocs(mealsRef);
 
-  return snapshot.docs.map(doc => ({
-    id: doc.id,
-    ...doc.data()
-  }));
+  return snapshot.docs.map(snapshotDoc => {
+    const data = snapshotDoc.data();
+    const numericId = Number(snapshotDoc.id);
+
+    return {
+      id: Number.isFinite(numericId) ? numericId : snapshotDoc.id,
+      date: data.date,
+      week: data.week,
+      meal: data.meal,
+      plants: Array.isArray(data.plants) ? data.plants : []
+    };
+  });
 }
 
 // Load all plants/library items
@@ -98,8 +125,26 @@ export async function loadLibrary(uid) {
   const libraryRef = collection(db, "users", uid, "library");
   const snapshot = await getDocs(libraryRef);
 
-  return snapshot.docs.map(doc => ({
-    id: doc.id,
-    ...doc.data()
-  }));
+  return snapshot.docs.map(snapshotDoc => {
+    const data = snapshotDoc.data();
+
+    return {
+      id: snapshotDoc.id,
+      name: data.name,
+      cat: data.cat
+    };
+  });
+}
+
+export async function loadUserData(uid) {
+  const [meals, library] = await Promise.all([
+    loadMeals(uid),
+    loadLibrary(uid)
+  ]);
+
+  return {
+    meals,
+    library,
+    isEmpty: meals.length === 0 && library.length === 0
+  };
 }
