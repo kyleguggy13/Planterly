@@ -11,65 +11,81 @@
 
 <div class="app-shell">
 
-  <!-- Sidebar -->
-  <nav class="sidebar">
+  <nav class="sidebar" aria-label="Primary">
     <div class="sidebar-logo">
-      <div class="sidebar-logo-mark">30 Plants</div>
-      <div class="sidebar-logo-sub">Weekly Tracker</div>
+      <div class="sidebar-logo-mark">Planterly</div>
+      <div class="sidebar-logo-sub">30 plants weekly tracker</div>
     </div>
-    <div class="nav-item active" data-page="log">
-      <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
-        <rect x="2" y="2" width="12" height="12" rx="2"/>
-        <path d="M5 8h6M8 5v6"/>
-      </svg>
-      <span>Log meal</span>
+    <div class="sidebar-nav">
+      <button class="nav-item active" data-page="log" type="button">
+        <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+          <rect x="2" y="2" width="12" height="12" rx="2"/>
+          <path d="M5 8h6M8 5v6"/>
+        </svg>
+        <span>Log meal</span>
+      </button>
+      <button class="nav-item" data-page="history" type="button">
+        <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+          <circle cx="8" cy="8" r="6"/>
+          <path d="M8 5v3l2 2"/>
+        </svg>
+        <span>This week</span>
+      </button>
+      <button class="nav-item" data-page="library" type="button">
+        <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+          <path d="M3 3h4v10H3zM9 3h4v10H9z"/>
+        </svg>
+        <span>Plant library</span>
+      </button>
     </div>
-    <div class="nav-item" data-page="history">
-      <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
-        <circle cx="8" cy="8" r="6"/>
-        <path d="M8 5v3l2 2"/>
-      </svg>
-      <span>This week</span>
-    </div>
-    <div class="nav-item" data-page="library">
-      <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
-        <path d="M3 3h4v10H3zM9 3h4v10H9z"/>
-      </svg>
-      <span>Plant library</span>
-    </div>
-    <div class="sidebar-footer">
-      <div class="sidebar-data">
-        <div class="sidebar-data-copy">Autosaved in browser</div>
-        <div class="sidebar-data-actions">
-          <button class="btn btn-ghost" id="export-btn">Export Logs</button>
-          <button class="btn btn-ghost" id="import-btn">Import Logs</button>
-          <input type="file" id="import-file" accept=".json,application/json" hidden>
-        </div>
-        <span class="data-status" id="data-status"></span>
-      </div>
+    <div class="sidebar-note">
+      Track meals, review the week, and keep your plant library close.
     </div>
   </nav>
 
-  <!-- Main -->
   <div class="main">
-
-    <!-- Topbar -->
     <div class="topbar">
-      <span class="topbar-title" id="page-title">Log meal</span>
+      <div class="topbar-copy">
+        <span class="topbar-kicker">Plant diversity tracker</span>
+        <span class="topbar-title" id="page-title">Log meal</span>
+      </div>
       <div class="topbar-week">
         <label for="week-sel">Week</label>
         <select id="week-sel"></select>
       </div>
-      <div id="accountControls">
-        <button class="btn btn-ghost" id="loginBtn">Sign in with Google</button>
-        <button class="btn btn-ghost" id="logoutBtn" style="display:none;">Sign out</button>
-        <span id="userStatus">Not signed in</span>
-      </div>
     </div>
 
     <div class="content">
+      <section class="hero-panel">
+        <div class="hero-content">
+          <p class="hero-kicker">30 plants a week</p>
+          <h1 class="hero-title">Build variety meal by meal.</h1>
+          <p class="hero-text">Log quickly, review your weekly mix, and keep sync and exports easy from any screen size.</p>
+        </div>
+        <div class="utility-grid">
+          <div class="utility-card">
+            <span class="utility-label">Account</span>
+            <div id="accountControls" class="account-controls">
+              <button class="btn btn-ghost" id="loginBtn" type="button">Sign in with Google</button>
+              <button class="btn btn-ghost" id="logoutBtn" type="button" style="display:none;">Sign out</button>
+              <span id="userStatus">Not signed in</span>
+            </div>
+          </div>
+          <div class="utility-card">
+            <span class="utility-label">Data</span>
+            <div class="sidebar-data">
+              <div class="sidebar-data-copy">Autosaved in browser</div>
+              <div class="sidebar-data-actions">
+                <button class="btn btn-ghost" id="export-btn" type="button">Export Logs</button>
+                <button class="btn btn-ghost" id="import-btn" type="button">Import Logs</button>
+                <input type="file" id="import-file" accept=".json,application/json" hidden>
+              </div>
+              <span class="data-status" id="data-status"></span>
+            </div>
+          </div>
+        </div>
+      </section>
 
-      <!-- Metrics -->
       <div class="metrics-row">
         <div class="metric-card">
           <div class="metric-label">Unique plants</div>
@@ -88,12 +104,11 @@
         </div>
         <div class="metric-card">
           <div class="metric-label">Most frequent</div>
-          <div class="metric-value" id="m-top" style="font-family:'DM Sans',sans-serif;font-size:16px;padding-top:6px">—</div>
+          <div class="metric-value metric-value-text" id="m-top">-</div>
           <div class="metric-sub" id="m-top-ct"></div>
         </div>
       </div>
 
-      <!-- Log page -->
       <div id="page-log" class="page active">
         <div class="form-layout">
 
@@ -102,18 +117,20 @@
               <span class="card-title" id="entry-form-title">Add meal entry</span>
             </div>
             <div class="card-body">
-              <div class="field">
-                <label for="f-date">Date</label>
-                <input type="date" id="f-date">
-              </div>
-              <div class="field">
-                <label for="f-meal">Meal</label>
-                <select id="f-meal">
-                  <option>Breakfast</option>
-                  <option>Lunch</option>
-                  <option selected>Dinner</option>
-                  <option>Snacks</option>
-                </select>
+              <div class="field-grid">
+                <div class="field">
+                  <label for="f-date">Date</label>
+                  <input type="date" id="f-date">
+                </div>
+                <div class="field">
+                  <label for="f-meal">Meal</label>
+                  <select id="f-meal">
+                    <option>Breakfast</option>
+                    <option>Lunch</option>
+                    <option selected>Dinner</option>
+                    <option>Snacks</option>
+                  </select>
+                </div>
               </div>
               <div class="field">
                 <label>Search &amp; add plants</label>
@@ -123,11 +140,11 @@
                 </div>
               </div>
               <div class="chips-area" id="f-chips">
-                <span class="chips-empty">No plants added — search above or click from library</span>
+                <span class="chips-empty">No plants added - search above or tap from library</span>
               </div>
               <div class="form-actions">
-                <button class="btn btn-ghost" id="edit-cancel-btn" style="display:none">Cancel edit</button>
-                <button class="btn btn-primary" id="submit-btn">Save meal entry</button>
+                <button class="btn btn-ghost" id="edit-cancel-btn" type="button" style="display:none;">Cancel edit</button>
+                <button class="btn btn-primary" id="submit-btn" type="button">Save meal entry</button>
               </div>
               <div class="save-msg" id="save-msg"></div>
             </div>
@@ -136,7 +153,7 @@
           <div class="card">
             <div class="card-header">
               <span class="card-title">Quick-add from library</span>
-              <span id="lib-quick-count" style="font-size:12px;color:var(--text-3)"></span>
+              <span class="card-meta" id="lib-quick-count"></span>
             </div>
             <div class="card-body">
               <div class="quick-grid" id="quick-grid"></div>
@@ -146,12 +163,11 @@
         </div>
       </div>
 
-      <!-- History page -->
-      <div id="page-history" class="page">
-        <div class="card" style="margin-bottom:20px">
+      <div id="page-history" class="page page-stack">
+        <div class="card">
           <div class="card-header">
             <span class="card-title">All unique plants this week</span>
-            <span id="h-unique-count" style="font-size:12px;color:var(--text-3)"></span>
+            <span class="card-meta" id="h-unique-count"></span>
           </div>
           <div class="card-body">
             <div class="unique-pills" id="unique-pills"></div>
@@ -161,7 +177,7 @@
           <div class="card-header">
             <span class="card-title">Meal log</span>
           </div>
-          <div class="card-body" style="padding-top:12px">
+          <div class="card-body card-body-tight">
             <table class="log-table">
               <thead>
                 <tr>
@@ -178,12 +194,11 @@
         </div>
       </div>
 
-      <!-- Library page -->
-      <div id="page-library" class="page">
+      <div id="page-library" class="page page-stack">
         <div class="card">
           <div class="card-header">
             <span class="card-title">Plant library</span>
-            <span id="lib-count" style="font-size:12px;color:var(--text-3)"></span>
+            <span class="card-meta" id="lib-count"></span>
           </div>
           <div class="card-body">
             <div class="lib-add-row">
@@ -197,14 +212,14 @@
                 <option value="nut">Nut / Seed</option>
                 <option value="other">Other</option>
               </select>
-              <button class="btn btn-ghost" id="lib-add-btn">Add</button>
+              <button class="btn btn-ghost" id="lib-add-btn" type="button">Add</button>
             </div>
             <table class="lib-table">
               <thead>
                 <tr>
                   <th>Plant</th>
                   <th>Category</th>
-                  <th>Times eaten<br><span style="text-transform:none;letter-spacing:0;font-weight:400;font-size:11px;color:var(--text-3)">this week</span></th>
+                  <th>Times eaten<br><span class="table-subnote">this week</span></th>
                   <th></th>
                 </tr>
               </thead>
@@ -399,7 +414,7 @@ function renderWeekOptions() {
     const o = { month: 'short', day: 'numeric' };
     const opt = document.createElement('option');
     opt.value = w;
-    opt.textContent = mon.toLocaleDateString('en-US', o) + ' – ' + sun.toLocaleDateString('en-US', o);
+    opt.textContent = mon.toLocaleDateString('en-US', o) + ' - ' + sun.toLocaleDateString('en-US', o);
     if (w === currentWeek) opt.selected = true;
     weekSel.appendChild(opt);
   });
@@ -421,15 +436,15 @@ function renderMetrics() {
   const pct = Math.min(100, Math.round(cnt / GOAL * 100));
   document.getElementById('m-pct').textContent = pct + '%';
   document.getElementById('m-bar').style.width = pct + '%';
-  document.getElementById('m-remaining').textContent = cnt >= GOAL ? '🎉 Goal reached!' : (GOAL - cnt) + ' plants to go';
+  document.getElementById('m-remaining').textContent = cnt >= GOAL ? 'Goal reached.' : (GOAL - cnt) + ' plants to go';
   const wm = weekMeals();
   document.getElementById('m-meals').textContent = wm.length;
   const days = new Set(wm.map(m => m.date)).size;
   document.getElementById('m-days').textContent = days + (days === 1 ? ' day tracked' : ' days tracked');
   const freq = plantFreq();
   const top = Object.entries(freq).sort((a,b) => b[1]-a[1])[0];
-  document.getElementById('m-top').textContent = top ? top[0] : '—';
-  document.getElementById('m-top-ct').textContent = top ? '×' + top[1] + ' this week' : '';
+  document.getElementById('m-top').textContent = top ? top[0] : '-';
+  document.getElementById('m-top-ct').textContent = top ? 'x' + top[1] + ' this week' : '';
 }
 
 // ── Quick library ─────────────────────────────────────────────────────
@@ -437,15 +452,17 @@ function renderQuickLib() {
   const el = document.getElementById('quick-grid');
   el.innerHTML = '';
   document.getElementById('lib-quick-count').textContent = appState.library.length + ' plants';
-  if (!appState.library.length) { el.innerHTML = '<span style="font-size:13px;color:var(--text-3);font-style:italic">Library is empty</span>'; return; }
+  if (!appState.library.length) { el.innerHTML = '<span class="chips-empty">Library is empty.</span>'; return; }
   [...appState.library].sort((a,b) => a.name.localeCompare(b.name)).forEach(p => {
     const col = CAT[p.cat] || CAT.other;
     const el2 = document.createElement('button');
-    el2.style.cssText = `display:inline-flex;align-items:center;background:${col.bg};border:1px solid ${col.border};color:${col.text};border-radius:99px;padding:5px 13px;font-size:12.5px;font-weight:500;cursor:pointer;font-family:'DM Sans',sans-serif;transition:filter 0.12s;`;
+    el2.type = 'button';
+    el2.className = 'quick-chip';
+    el2.style.setProperty('--quick-bg', col.bg);
+    el2.style.setProperty('--quick-border', col.border);
+    el2.style.setProperty('--quick-text', col.text);
     el2.textContent = p.name;
     el2.title = 'Add to meal';
-    el2.onmouseenter = () => el2.style.filter = 'brightness(0.95)';
-    el2.onmouseleave = () => el2.style.filter = '';
     el2.onclick = () => addChip(p.name);
     el.appendChild(el2);
   });
@@ -455,14 +472,14 @@ function renderQuickLib() {
 function renderChips() {
   const el = document.getElementById('f-chips');
   el.innerHTML = '';
-  if (!selectedPlants.length) { el.innerHTML = '<span class="chips-empty">No plants added — search above or click from library</span>'; return; }
+  if (!selectedPlants.length) { el.innerHTML = '<span class="chips-empty">No plants added - search above or tap from library</span>'; return; }
   const u = new Set();
   formWeekMeals().forEach(m => m.plants.forEach(p => u.add(p)));
   selectedPlants.forEach(name => {
     const chip = document.createElement('div');
     chip.className = 'chip' + (u.has(name) ? ' dup' : '');
     chip.title = u.has(name) ? name + ' already counted this week' : name;
-    chip.innerHTML = name + '<span class="chip-x" data-name="' + name + '">×</span>';
+    chip.innerHTML = name + '<span class="chip-x" data-name="' + name + '">x</span>';
     chip.querySelector('.chip-x').onclick = () => { selectedPlants = selectedPlants.filter(x => x !== name); renderChips(); };
     el.appendChild(chip);
   });
@@ -731,13 +748,13 @@ function renderHistory() {
     const tr = document.createElement('tr'); tr.className = 'log-row';
     const plantsHtml = entry.plants.map(p => `<span class="lp">${p}</span>`).join('');
     tr.innerHTML = `
-      <td class="log-date">${fmtDate(entry.date)}</td>
-      <td><span class="log-meal-badge">${entry.meal}</span></td>
-      <td><div class="log-plants-cell">${plantsHtml}</div></td>
-      <td>
+      <td class="log-date" data-label="Date">${fmtDate(entry.date)}</td>
+      <td data-label="Meal"><span class="log-meal-badge">${entry.meal}</span></td>
+      <td data-label="Plants"><div class="log-plants-cell">${plantsHtml}</div></td>
+      <td data-label="Actions">
         <div class="log-actions">
-          <button class="btn btn-secondary" data-action="edit">Edit</button>
-          <button class="btn btn-danger" data-action="remove">Remove</button>
+          <button class="btn btn-secondary" type="button" data-action="edit">Edit</button>
+          <button class="btn btn-danger" type="button" data-action="remove">Remove</button>
         </div>
       </td>
     `;
@@ -776,10 +793,14 @@ function renderLibrary() {
     const tr = document.createElement('tr'); tr.className = 'lib-row';
     const ct = freq[p.name] || 0;
     tr.innerHTML = `
-      <td class="lib-name">${p.name}</td>
-      <td><span class="cat-pill" style="background:${col.bg};border:1px solid ${col.border};color:${col.text}">${col.label}</span></td>
-      <td style="color:var(--text-2)">${ct > 0 ? '<strong>×' + ct + '</strong>' : '—'}</td>
-      <td><button class="btn btn-danger" data-name="${p.name}">Remove</button></td>
+      <td class="lib-name" data-label="Plant">${p.name}</td>
+      <td data-label="Category"><span class="cat-pill" style="background:${col.bg};border:1px solid ${col.border};color:${col.text}">${col.label}</span></td>
+      <td class="lib-count-cell" data-label="Times this week" style="color:var(--text-2)">${ct > 0 ? '<strong>x' + ct + '</strong>' : '-'}</td>
+      <td data-label="Actions">
+        <div class="lib-actions">
+          <button class="btn btn-danger" type="button" data-name="${p.name}">Remove</button>
+        </div>
+      </td>
     `;
     tr.querySelector('.btn-danger').onclick = async () => {
       try {
