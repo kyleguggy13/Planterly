@@ -1,0 +1,69 @@
+flowchart TD
+    subgraph 1. Sign-in flow
+    A[User clicks Sign in with Google] --> B[index.html button id='loginBtn']
+    B --> C[app.js loginBtn click listener]
+    C --> D[signInWithGoogle]
+    D --> E[firebase.js signInWithPopup]
+    E --> F[Firebase Auth returns user]
+    F --> G[watchAuth callback in app.js]
+    G --> H[currentUser = user]
+    H --> I[loadUserData]
+    I --> J[Firestore users/uid/meals + users/uid/library]
+    end
+
+
+    subgraph 2. Meal-entry flow
+    B_1[User enters Date] --> B_2[dateInput = #f-date]
+    C1[User selects Meal] --> D1[mealInput = #f-meal]
+    E1[User types/clicks plants] --> F1[plantInput = #f-plant-input]
+    F1 --> G1[addChip]
+    G1 --> H1[selectedPlants array]
+    H1 --> I1[User clicks Save meal entry]
+    I1 --> J1[submitBtn.onclick]
+    J1 --> K1[Build entry object]
+    K1 --> L1[saveMealEntryRemote]
+    L1 --> M1[window.planterlySync.saveMealEntry]
+    M1 --> N1[app.js]
+    N1 --> N2[saveMeal]
+    N2 --> N3[(currentUser.uid)]
+    N2 --> N4[(String)]
+    N4 --> N5[(entry.id)]
+    N2 --> N6[(entry)]
+    N1 --> O1[firebase.js saveMeal]
+    N1 --> O3(uid, mealId, mealData)
+    O1 --> P1[Firestore document users/uid/meals/mealId]
+    end
+
+    subgraph 3. Plant library flow
+    C_1[User types plant name] --> C_2[#lib-input]
+    C_3[User selects category] --> C_4[#lib-cat]
+    C_5[User clicks Add] --> C_6[#lib-add-btn onclick]
+    C_6 --> C_7[name = toTitle]
+    C_8 --> C_9[(inp.value)]
+    C_9 --> C_10[cat = #lib-cat.value]
+    C_10 --> C_11[libraryItem = ]
+    C_11 --> C_12{ name, cat }
+    C_13 --> C_11
+    C_11 --> C_12[saveLibraryItemRemote]
+    C_12 --> C_12_1(libraryItem)
+    C_12 --> C_13[window.planterlySync.saveLibraryItem]
+    C_K --> C_K1(item)
+    C_K --> C_L[app.js savePlant]
+    C_L --> C_L1([currentUser.uid])
+    C_L1 --> C_L2([getPlantDocId])
+    C_L2 --> C_L21[(item.name)]
+    C_L1 --> C_L3([item])
+    C_L --> C_M[firebase.js savePlant]
+    C_M --> C_M1[(uid)]
+    C_M --> C_M2[(plantId)]
+    C_M --> C_M3([plantData])
+    C_M --> C_N[Firestore users/uid/library/plantId]
+    end
+
+
+    subgraph 4. Cloud sync bridge between index.html and Firebase
+    D-A[index.html inline app] --> D-B[window.planterlySync]
+    D-B --> D-C[app.js currentUser.uid]
+    D-C --> D-D[firebase.js saveMeal/savePlant/deleteMeal/deletePlant]
+    D-D --> D-E[Firestore]
+    end
