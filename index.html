@@ -10,6 +10,70 @@
 <body>
 
 <div class="app-shell">
+  <aside class="mobile-drawer" id="mobile-drawer" aria-hidden="true">
+    <div class="mobile-drawer-panel" id="mobile-drawer-panel" role="dialog" aria-modal="true" aria-label="Navigation menu">
+      <div class="mobile-drawer-header">
+        <div class="sidebar-logo mobile-drawer-logo">
+          <div class="sidebar-logo-mark">Planterly</div>
+          <div class="sidebar-logo-sub">30 plants weekly tracker</div>
+        </div>
+        <button class="drawer-close-btn" id="drawer-close-btn" type="button" aria-label="Close menu">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true">
+            <path d="M4 4l8 8M12 4 4 12" stroke-linecap="round"/>
+          </svg>
+        </button>
+      </div>
+      <div class="mobile-drawer-body">
+        <nav class="mobile-drawer-nav" aria-label="Drawer navigation">
+          <button class="nav-item active" data-page="log" type="button">
+            <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+              <rect x="2" y="2" width="12" height="12" rx="2"/>
+              <path d="M5 8h6M8 5v6"/>
+            </svg>
+            <span>Log meal</span>
+          </button>
+          <button class="nav-item" data-page="history" type="button">
+            <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+              <circle cx="8" cy="8" r="6"/>
+              <path d="M8 5v3l2 2"/>
+            </svg>
+            <span>This week</span>
+          </button>
+          <button class="nav-item" data-page="library" type="button">
+            <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+              <path d="M3 3h4v10H3zM9 3h4v10H9z"/>
+            </svg>
+            <span>Plant library</span>
+          </button>
+        </nav>
+        <div class="drawer-utility-panel" id="mobile-utility-host">
+          <div class="utility-menu-content" id="utility-menu-content">
+            <div class="utility-section">
+              <span class="utility-label">Account</span>
+              <div id="accountControls" class="account-controls">
+                <button class="btn btn-ghost" id="loginBtn" type="button">Sign in with Google</button>
+                <button class="btn btn-ghost" id="logoutBtn" type="button" style="display:none;">Sign out</button>
+                <span id="userStatus">Not signed in</span>
+              </div>
+            </div>
+            <div class="utility-section">
+              <span class="utility-label">Data</span>
+              <div class="sidebar-data">
+                <div class="sidebar-data-copy">Autosaved in browser</div>
+                <div class="sidebar-data-actions">
+                  <button class="btn btn-ghost" id="export-btn" type="button">Export Logs</button>
+                  <button class="btn btn-ghost" id="import-btn" type="button">Import Logs</button>
+                  <input type="file" id="import-file" accept=".json,application/json" hidden>
+                </div>
+                <span class="data-status" id="data-status"></span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </aside>
+  <div class="drawer-overlay" id="drawer-overlay" aria-hidden="true"></div>
 
   <nav class="sidebar" aria-label="Primary">
     <div class="sidebar-logo">
@@ -38,6 +102,26 @@
         <span>Plant library</span>
       </button>
     </div>
+    <div class="sidebar-tools">
+      <button
+        class="sidebar-menu-toggle"
+        id="desktop-menu-toggle"
+        type="button"
+        aria-expanded="false"
+        aria-controls="desktop-utility-panel"
+      >
+        <span class="sidebar-menu-toggle-copy">
+          <span class="sidebar-menu-toggle-label">Menu</span>
+          <span class="sidebar-menu-toggle-sub">Account and data</span>
+        </span>
+        <svg class="sidebar-menu-toggle-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+          <path d="M3 5h10M3 8h10M3 11h10" stroke-linecap="round"/>
+        </svg>
+      </button>
+      <div class="sidebar-utility-panel" id="desktop-utility-panel" aria-hidden="true">
+        <div id="desktop-utility-host"></div>
+      </div>
+    </div>
     <div class="sidebar-note">
       Track meals, review the week, and keep your plant library close.
     </div>
@@ -45,9 +129,23 @@
 
   <div class="main">
     <div class="topbar">
-      <div class="topbar-copy">
-        <span class="topbar-kicker">Plant diversity tracker</span>
-        <span class="topbar-title" id="page-title">Log meal</span>
+      <div class="topbar-main">
+        <div class="topbar-copy">
+          <span class="topbar-kicker">Plant diversity tracker</span>
+          <span class="topbar-title" id="page-title">Log meal</span>
+        </div>
+        <button
+          class="topbar-menu-btn"
+          id="mobile-menu-toggle"
+          type="button"
+          aria-expanded="false"
+          aria-controls="mobile-drawer"
+          aria-label="Open menu"
+        >
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+            <path d="M3 5h10M3 8h10M3 11h10" stroke-linecap="round"/>
+          </svg>
+        </button>
       </div>
       <div class="topbar-week">
         <label for="week-sel">Week</label>
@@ -56,33 +154,11 @@
     </div>
 
     <div class="content">
-      <section class="hero-panel">
+      <section class="hero-panel" id="hero-panel">
         <div class="hero-content">
           <p class="hero-kicker">30 plants a week</p>
           <h1 class="hero-title">Build variety meal by meal.</h1>
-          <p class="hero-text">Log quickly, review your weekly mix, and keep sync and exports easy from any screen size.</p>
-        </div>
-        <div class="utility-grid">
-          <div class="utility-card">
-            <span class="utility-label">Account</span>
-            <div id="accountControls" class="account-controls">
-              <button class="btn btn-ghost" id="loginBtn" type="button">Sign in with Google</button>
-              <button class="btn btn-ghost" id="logoutBtn" type="button" style="display:none;">Sign out</button>
-              <span id="userStatus">Not signed in</span>
-            </div>
-          </div>
-          <div class="utility-card">
-            <span class="utility-label">Data</span>
-            <div class="sidebar-data">
-              <div class="sidebar-data-copy">Autosaved in browser</div>
-              <div class="sidebar-data-actions">
-                <button class="btn btn-ghost" id="export-btn" type="button">Export Logs</button>
-                <button class="btn btn-ghost" id="import-btn" type="button">Import Logs</button>
-                <input type="file" id="import-file" accept=".json,application/json" hidden>
-              </div>
-              <span class="data-status" id="data-status"></span>
-            </div>
-          </div>
+          <p class="hero-text">Log your plants. Review your weekly mix. Sync across devices with Google account or export/import locally.</p>
         </div>
       </section>
 
@@ -352,6 +428,133 @@ const exportBtn = document.getElementById('export-btn');
 const importBtn = document.getElementById('import-btn');
 const importFileInput = document.getElementById('import-file');
 const dataStatus = document.getElementById('data-status');
+const mobileMenuToggle = document.getElementById('mobile-menu-toggle');
+const mobileDrawer = document.getElementById('mobile-drawer');
+const mobileDrawerPanel = document.getElementById('mobile-drawer-panel');
+const drawerCloseBtn = document.getElementById('drawer-close-btn');
+const drawerOverlay = document.getElementById('drawer-overlay');
+const desktopMenuToggle = document.getElementById('desktop-menu-toggle');
+const desktopUtilityPanel = document.getElementById('desktop-utility-panel');
+const utilityMenuContent = document.getElementById('utility-menu-content');
+const mobileUtilityHost = document.getElementById('mobile-utility-host');
+const desktopUtilityHost = document.getElementById('desktop-utility-host');
+const heroPanel = document.getElementById('hero-panel');
+const desktopLayoutQuery = window.matchMedia('(min-width: 1024px)');
+
+let mobileDrawerOpen = false;
+let desktopUtilityOpen = false;
+let lastDrawerFocus = null;
+
+function getFocusableElements(container) {
+  return [...container.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])')]
+    .filter(element => !element.disabled && element.getAttribute('aria-hidden') !== 'true' && element.offsetParent !== null);
+}
+
+function syncMenuState() {
+  mobileMenuToggle.setAttribute('aria-expanded', String(mobileDrawerOpen));
+  mobileDrawer.setAttribute('aria-hidden', String(!mobileDrawerOpen));
+  drawerOverlay.setAttribute('aria-hidden', String(!mobileDrawerOpen));
+  desktopMenuToggle.setAttribute('aria-expanded', String(desktopUtilityOpen));
+  desktopUtilityPanel.setAttribute('aria-hidden', String(!desktopUtilityOpen));
+  mobileDrawer.inert = !mobileDrawerOpen;
+  desktopUtilityPanel.inert = !desktopLayoutQuery.matches || !desktopUtilityOpen;
+}
+
+function mountUtilityControls() {
+  const host = desktopLayoutQuery.matches ? desktopUtilityHost : mobileUtilityHost;
+  if (utilityMenuContent.parentElement !== host) host.appendChild(utilityMenuContent);
+}
+
+function closeMobileDrawer(options = {}) {
+  const { restoreFocus = true } = options;
+  if (!mobileDrawerOpen) return;
+  mobileDrawerOpen = false;
+  mobileDrawer.classList.remove('is-open');
+  drawerOverlay.classList.remove('is-open');
+  document.body.classList.remove('drawer-open');
+  syncMenuState();
+  if (restoreFocus && lastDrawerFocus instanceof HTMLElement) lastDrawerFocus.focus();
+}
+
+function openMobileDrawer() {
+  if (desktopLayoutQuery.matches || mobileDrawerOpen) return;
+  lastDrawerFocus = document.activeElement instanceof HTMLElement ? document.activeElement : mobileMenuToggle;
+  mobileDrawerOpen = true;
+  mobileDrawer.classList.add('is-open');
+  drawerOverlay.classList.add('is-open');
+  document.body.classList.add('drawer-open');
+  syncMenuState();
+  window.requestAnimationFrame(() => drawerCloseBtn.focus());
+}
+
+function setDesktopUtilityOpen(nextOpen) {
+  desktopUtilityOpen = nextOpen;
+  desktopUtilityPanel.classList.toggle('is-open', desktopUtilityOpen);
+  syncMenuState();
+}
+
+function toggleDesktopUtility() {
+  setDesktopUtilityOpen(!desktopUtilityOpen);
+}
+
+function syncUtilityPlacement() {
+  mountUtilityControls();
+  if (desktopLayoutQuery.matches) {
+    closeMobileDrawer({ restoreFocus: false });
+  } else {
+    setDesktopUtilityOpen(false);
+  }
+}
+
+function trapDrawerFocus(event) {
+  const focusable = getFocusableElements(mobileDrawerPanel);
+  if (!focusable.length) return;
+  const first = focusable[0];
+  const last = focusable[focusable.length - 1];
+
+  if (event.shiftKey && document.activeElement === first) {
+    event.preventDefault();
+    last.focus();
+    return;
+  }
+
+  if (!event.shiftKey && document.activeElement === last) {
+    event.preventDefault();
+    first.focus();
+  }
+}
+
+syncUtilityPlacement();
+if (typeof desktopLayoutQuery.addEventListener === 'function') desktopLayoutQuery.addEventListener('change', syncUtilityPlacement);
+else desktopLayoutQuery.addListener(syncUtilityPlacement);
+mobileMenuToggle.addEventListener('click', () => {
+  if (mobileDrawerOpen) closeMobileDrawer();
+  else openMobileDrawer();
+});
+drawerCloseBtn.addEventListener('click', () => closeMobileDrawer());
+drawerOverlay.addEventListener('click', () => closeMobileDrawer());
+desktopMenuToggle.addEventListener('click', toggleDesktopUtility);
+document.addEventListener('click', event => {
+  if (!desktopLayoutQuery.matches || !desktopUtilityOpen) return;
+  const target = event.target;
+  if (!(target instanceof Node)) return;
+  if (desktopMenuToggle.contains(target) || desktopUtilityPanel.contains(target)) return;
+  setDesktopUtilityOpen(false);
+});
+document.addEventListener('keydown', event => {
+  if (event.key === 'Escape') {
+    if (mobileDrawerOpen) closeMobileDrawer();
+    if (desktopUtilityOpen) setDesktopUtilityOpen(false);
+    return;
+  }
+  if (event.key === 'Tab' && mobileDrawerOpen) trapDrawerFocus(event);
+});
+
+function syncHeroPanel(page) {
+  const showHero = page === 'log';
+  heroPanel.hidden = !showHero;
+  heroPanel.classList.toggle('is-hidden', !showHero);
+}
 
 const hasRemoteSync = () => Boolean(window.planterlySync?.isSignedIn?.());
 const ensureRemoteSyncReady = () => {
@@ -531,7 +734,7 @@ plantInput.addEventListener('keydown', e => {
 plantInput.addEventListener('blur', () => setTimeout(hideAC, 160));
 dateInput.addEventListener('change', renderChips);
 
-function showDataStatus(text, color = 'var(--text-2)', clearAfter = 3200) {
+function showDataStatus(text, color = 'rgba(255, 255, 255, 0.82)', clearAfter = 3200) {
   dataStatus.style.color = color;
   dataStatus.textContent = text;
   clearTimeout(dataStatusTimer);
@@ -843,6 +1046,8 @@ function setActivePage(page) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.getElementById('page-' + page).classList.add('active');
   document.getElementById('page-title').textContent = PAGE_TITLES[page];
+  syncHeroPanel(page);
+  if (!desktopLayoutQuery.matches) closeMobileDrawer({ restoreFocus: false });
   if (page === 'history') renderHistory();
   if (page === 'library') renderLibrary();
 }
@@ -857,6 +1062,7 @@ function renderAll() {
   renderQuickLib();
   renderChips();
   const activePage = document.querySelector('.nav-item.active')?.dataset.page;
+  syncHeroPanel(activePage);
   if (activePage === 'history') renderHistory();
   if (activePage === 'library') renderLibrary();
 }
