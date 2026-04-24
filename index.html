@@ -37,7 +37,7 @@
               <circle cx="8" cy="8" r="6"/>
               <path d="M8 5v3l2 2"/>
             </svg>
-            <span>This week</span>
+            <span>History</span>
           </button>
           <button class="nav-item" data-page="library" type="button">
             <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
@@ -93,7 +93,7 @@
           <circle cx="8" cy="8" r="6"/>
           <path d="M8 5v3l2 2"/>
         </svg>
-        <span>This week</span>
+        <span>History</span>
       </button>
       <button class="nav-item" data-page="library" type="button">
         <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
@@ -123,7 +123,7 @@
       </div>
     </div>
     <div class="sidebar-note">
-      Track meals, review the week, and keep your plant library close.
+      Track meals, review trends, and keep your plant library close.
     </div>
   </nav>
 
@@ -147,9 +147,27 @@
           </svg>
         </button>
       </div>
-      <div class="topbar-week">
-        <label for="week-sel">Week</label>
-        <select id="week-sel"></select>
+      <div class="topbar-period">
+        <div class="period-tabs" aria-label="Choose history period">
+          <button class="period-tab" type="button" data-period="day">Day</button>
+          <button class="period-tab active" type="button" data-period="week">Week</button>
+          <button class="period-tab" type="button" data-period="month">Month</button>
+          <button class="period-tab" type="button" data-period="year">Year</button>
+        </div>
+        <div class="period-range">
+          <button class="period-nav-btn" id="period-prev" type="button" aria-label="Previous period">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true">
+              <path d="M10 4 6 8l4 4" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </button>
+          <select id="period-sel" aria-label="Selected period range"></select>
+          <input type="date" id="period-date" aria-label="Selected day" hidden>
+          <button class="period-nav-btn" id="period-next" type="button" aria-label="Next period">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true">
+              <path d="m6 4 4 4-4 4" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </button>
+        </div>
       </div>
     </div>
 
@@ -166,9 +184,9 @@
         <div class="metric-card">
           <div class="metric-label">Unique plants</div>
           <div class="metric-value accent" id="m-unique">0</div>
-          <div class="metric-bar"><div class="metric-bar-fill" id="m-bar" style="width:0%"></div></div>
+          <div class="metric-bar" id="m-unique-bar"><div class="metric-bar-fill" id="m-bar" style="width:0%"></div></div>
         </div>
-        <div class="metric-card">
+        <div class="metric-card" id="m-goal-card">
           <div class="metric-label">Goal progress</div>
           <div class="metric-value" id="m-pct">0%</div>
           <div class="metric-sub" id="m-remaining">30 plants to go</div>
@@ -242,7 +260,7 @@
       <div id="page-history" class="page page-stack">
         <div class="card">
           <div class="card-header">
-            <span class="card-title">All unique plants this week</span>
+            <span class="card-title" id="h-unique-title">All unique plants this week</span>
             <span class="card-meta" id="h-unique-count"></span>
           </div>
           <div class="card-body">
@@ -295,7 +313,7 @@
                 <tr>
                   <th>Plant</th>
                   <th>Category</th>
-                  <th>Times eaten<br><span class="table-subnote">this week</span></th>
+                  <th>Times eaten<br><span class="table-subnote" id="lib-period-label">this week</span></th>
                   <th></th>
                 </tr>
               </thead>
@@ -395,22 +413,59 @@ const persist = () => { try { localStorage.setItem('pt-app', JSON.stringify(appS
 
 // ── Helpers ───────────────────────────────────────────────────────────
 const toTitle = s => s.trim().replace(/\b\w/g, c => c.toUpperCase());
-const fmtDate = iso => { const d = new Date(iso + 'T00:00:00'); return d.toLocaleDateString('en-US', {weekday:'short', month:'short', day:'numeric'}); };
-const getWeekStart = d => { const dd = new Date(d); dd.setDate(dd.getDate() - dd.getDay()); return dd.toISOString().slice(0,10); };
-const todayISO = new Date().toISOString().slice(0,10);
-const getMealWeek = meal => meal.week || getWeekStart(new Date(meal.date + 'T00:00:00'));
+const parseISODateLocal = iso => {
+  if (!isISODate(iso)) return null;
+  const [year, month, day] = iso.split('-').map(Number);
+  return new Date(year, month - 1, day);
+};
+const toISODateLocal = date => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+const addDays = (iso, days) => {
+  const date = parseISODateLocal(iso);
+  if (!date) return iso;
+  date.setDate(date.getDate() + days);
+  return toISODateLocal(date);
+};
+const addMonthsToKey = (key, months) => {
+  const [year, month] = key.split('-').map(Number);
+  return toISODateLocal(new Date(year, month - 1 + months, 1)).slice(0, 7);
+};
+const addYearsToKey = (key, years) => String(Number(key) + years);
+const fmtDate = iso => {
+  const d = parseISODateLocal(iso);
+  return d ? d.toLocaleDateString('en-US', {weekday:'short', month:'short', day:'numeric'}) : iso;
+};
+const getWeekStart = value => {
+  const dd = typeof value === 'string' ? parseISODateLocal(value) : new Date(value);
+  if (!dd || Number.isNaN(dd.getTime())) return '';
+  dd.setDate(dd.getDate() - dd.getDay());
+  return toISODateLocal(dd);
+};
 const isISODate = value => {
   if (typeof value !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
   const [year, month, day] = value.split('-').map(Number);
   const date = new Date(Date.UTC(year, month - 1, day));
   return date.getUTCFullYear() === year && date.getUTCMonth() === month - 1 && date.getUTCDate() === day;
 };
-const getLatestMealWeek = meals => meals.reduce((latest, meal) => {
-  const week = getMealWeek(meal);
-  return !latest || week > latest ? week : latest;
+const todayISO = toISODateLocal(new Date());
+const getMealWeek = meal => getWeekStart(meal.date);
+const getLatestMealDate = meals => meals.reduce((latest, meal) => {
+  const date = isISODate(meal.date) ? meal.date : '';
+  return date && (!latest || date > latest) ? date : latest;
 }, '');
+const PERIOD_COPY = {
+  day: { label: 'day', thisLabel: 'on this day' },
+  week: { label: 'week', thisLabel: 'this week' },
+  month: { label: 'month', thisLabel: 'this month' },
+  year: { label: 'year', thisLabel: 'this year' },
+};
 
-let currentWeek = getWeekStart(new Date());
+let currentPeriod = 'week';
+let currentPeriodKey = getWeekStart(todayISO);
 let selectedPlants = [];
 let acIndex = -1;
 let editingMealId = null;
@@ -567,7 +622,6 @@ const cloneStateSnapshot = () => ({
   meals: appState.meals.map(meal => ({
     id: meal.id,
     date: meal.date,
-    week: getMealWeek(meal),
     meal: meal.meal,
     plants: [...meal.plants],
   })),
@@ -598,56 +652,139 @@ async function replaceRemoteStateSnapshot(nextState) {
   await window.planterlySync.replaceRemoteState(nextState);
 }
 
-// ── Week selector ─────────────────────────────────────────────────────
-const weekSel = document.getElementById('week-sel');
-function renderWeekOptions() {
-  const weeks = new Set();
-  for (let i = -3; i <= 4; i++) {
-    const d = new Date(); d.setDate(d.getDate() + i * 7);
-    weeks.add(getWeekStart(d));
+// ── Period selector ───────────────────────────────────────────────────
+const periodSel = document.getElementById('period-sel');
+const periodDateInput = document.getElementById('period-date');
+const periodPrevBtn = document.getElementById('period-prev');
+const periodNextBtn = document.getElementById('period-next');
+const periodTabs = [...document.querySelectorAll('.period-tab')];
+
+function getPeriodKey(period, isoDate) {
+  const date = parseISODateLocal(isoDate) || parseISODateLocal(todayISO);
+  const iso = toISODateLocal(date);
+  if (period === 'day') return iso;
+  if (period === 'week') return getWeekStart(iso);
+  if (period === 'month') return iso.slice(0, 7);
+  return iso.slice(0, 4);
+}
+
+function getPeriodRange(period = currentPeriod, key = currentPeriodKey) {
+  if (period === 'day') return { start: key, end: key };
+  if (period === 'week') return { start: key, end: addDays(key, 6) };
+  if (period === 'month') {
+    const [year, month] = key.split('-').map(Number);
+    return { start: `${key}-01`, end: toISODateLocal(new Date(year, month, 0)) };
   }
-  appState.meals.forEach(m => weeks.add(getMealWeek(m)));
-  weeks.add(currentWeek);
-  weekSel.innerHTML = '';
-  [...weeks].sort().forEach(w => {
-    const weekStart = new Date(w + 'T00:00:00');
-    const weekEnd = new Date(w + 'T00:00:00'); weekEnd.setDate(weekEnd.getDate() + 6);
-    const mon = weekStart;
-    const sun = weekEnd;
-    const o = { month: 'short', day: 'numeric' };
+  return { start: `${key}-01-01`, end: `${key}-12-31` };
+}
+
+function formatPeriodLabel(period, key) {
+  const range = getPeriodRange(period, key);
+  const start = parseISODateLocal(range.start);
+  const end = parseISODateLocal(range.end);
+  if (!start || !end) return key;
+  if (period === 'day') return start.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
+  if (period === 'week') {
+    const dateOptions = { month: 'short', day: 'numeric' };
+    const endOptions = start.getFullYear() === end.getFullYear() ? dateOptions : { ...dateOptions, year: 'numeric' };
+    return `${start.toLocaleDateString('en-US', dateOptions)} - ${end.toLocaleDateString('en-US', endOptions)}`;
+  }
+  if (period === 'month') return start.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+  return key;
+}
+
+function shiftPeriodKey(period, key, delta) {
+  if (period === 'day') return addDays(key, delta);
+  if (period === 'week') return addDays(key, delta * 7);
+  if (period === 'month') return addMonthsToKey(key, delta);
+  return addYearsToKey(key, delta);
+}
+
+function getPeriodOptionKeys(period) {
+  const keys = new Set();
+  const todayKey = getPeriodKey(period, todayISO);
+  const spread = period === 'day' ? 14 : period === 'week' ? 8 : period === 'month' ? 12 : 5;
+  const futureSpread = period === 'year' ? 2 : spread;
+  for (let i = -spread; i <= futureSpread; i++) keys.add(shiftPeriodKey(period, todayKey, i));
+  appState.meals.forEach(meal => {
+    if (isISODate(meal.date)) keys.add(getPeriodKey(period, meal.date));
+  });
+  keys.add(currentPeriodKey);
+  return [...keys].sort();
+}
+
+function renderPeriodControls() {
+  periodTabs.forEach(tab => {
+    const active = tab.dataset.period === currentPeriod;
+    tab.classList.toggle('active', active);
+    tab.setAttribute('aria-pressed', String(active));
+  });
+  const isDay = currentPeriod === 'day';
+  periodDateInput.hidden = !isDay;
+  periodSel.hidden = isDay;
+  if (isDay) {
+    periodDateInput.value = currentPeriodKey;
+    return;
+  }
+  periodSel.innerHTML = '';
+  getPeriodOptionKeys(currentPeriod).forEach(key => {
     const opt = document.createElement('option');
-    opt.value = w;
-    opt.textContent = mon.toLocaleDateString('en-US', o) + ' - ' + sun.toLocaleDateString('en-US', o);
-    if (w === currentWeek) opt.selected = true;
-    weekSel.appendChild(opt);
+    opt.value = key;
+    opt.textContent = formatPeriodLabel(currentPeriod, key);
+    if (key === currentPeriodKey) opt.selected = true;
+    periodSel.appendChild(opt);
   });
 }
-renderWeekOptions();
-weekSel.addEventListener('change', () => { currentWeek = weekSel.value; renderAll(); });
+
+periodTabs.forEach(tab => {
+  tab.addEventListener('click', () => {
+    const nextPeriod = tab.dataset.period;
+    if (!PERIOD_COPY[nextPeriod] || nextPeriod === currentPeriod) return;
+    const anchorDate = getPeriodRange(currentPeriod, currentPeriodKey).start;
+    currentPeriod = nextPeriod;
+    currentPeriodKey = getPeriodKey(currentPeriod, anchorDate);
+    renderAll();
+  });
+});
+periodSel.addEventListener('change', () => { currentPeriodKey = periodSel.value; renderAll(); });
+periodDateInput.addEventListener('change', () => {
+  if (!isISODate(periodDateInput.value)) return;
+  currentPeriodKey = getPeriodKey('day', periodDateInput.value);
+  renderAll();
+});
+periodPrevBtn.addEventListener('click', () => { currentPeriodKey = shiftPeriodKey(currentPeriod, currentPeriodKey, -1); renderAll(); });
+periodNextBtn.addEventListener('click', () => { currentPeriodKey = shiftPeriodKey(currentPeriod, currentPeriodKey, 1); renderAll(); });
 
 // ── Filtered data ─────────────────────────────────────────────────────
-const weekMeals = () => appState.meals.filter(m => getMealWeek(m) === currentWeek);
-const formWeek = () => dateInput.value ? getWeekStart(new Date(dateInput.value + 'T00:00:00')) : currentWeek;
+const periodMeals = () => {
+  const { start, end } = getPeriodRange();
+  return appState.meals.filter(m => isISODate(m.date) && m.date >= start && m.date <= end);
+};
+const formWeek = () => dateInput.value ? getWeekStart(dateInput.value) : getWeekStart(todayISO);
 const formWeekMeals = () => appState.meals.filter(m => getMealWeek(m) === formWeek() && m.id !== editingMealId);
-const uniquePlants = () => { const s = new Set(); weekMeals().forEach(m => m.plants.forEach(p => s.add(p))); return s; };
-const plantFreq = () => { const f = {}; weekMeals().forEach(m => m.plants.forEach(p => { f[p] = (f[p]||0)+1; })); return f; };
+const uniquePlants = () => { const s = new Set(); periodMeals().forEach(m => m.plants.forEach(p => s.add(p))); return s; };
+const plantFreq = () => { const f = {}; periodMeals().forEach(m => m.plants.forEach(p => { f[p] = (f[p]||0)+1; })); return f; };
 
 // ── Metrics ───────────────────────────────────────────────────────────
 function renderMetrics() {
   const u = uniquePlants(); const cnt = u.size;
+  const isWeek = currentPeriod === 'week';
+  document.querySelector('.metrics-row').classList.toggle('period-neutral', !isWeek);
   document.getElementById('m-unique').textContent = cnt;
   const pct = Math.min(100, Math.round(cnt / GOAL * 100));
   document.getElementById('m-pct').textContent = pct + '%';
   document.getElementById('m-bar').style.width = pct + '%';
   document.getElementById('m-remaining').textContent = cnt >= GOAL ? 'Goal reached.' : (GOAL - cnt) + ' plants to go';
-  const wm = weekMeals();
-  document.getElementById('m-meals').textContent = wm.length;
-  const days = new Set(wm.map(m => m.date)).size;
+  document.getElementById('m-goal-card').hidden = !isWeek;
+  document.getElementById('m-unique-bar').hidden = !isWeek;
+  const meals = periodMeals();
+  document.getElementById('m-meals').textContent = meals.length;
+  const days = new Set(meals.map(m => m.date)).size;
   document.getElementById('m-days').textContent = days + (days === 1 ? ' day tracked' : ' days tracked');
   const freq = plantFreq();
   const top = Object.entries(freq).sort((a,b) => b[1]-a[1])[0];
   document.getElementById('m-top').textContent = top ? top[0] : '-';
-  document.getElementById('m-top-ct').textContent = top ? 'x' + top[1] + ' this week' : '';
+  document.getElementById('m-top-ct').textContent = top ? 'x' + top[1] + ' ' + PERIOD_COPY[currentPeriod].thisLabel : '';
 }
 
 // ── Quick library ─────────────────────────────────────────────────────
@@ -792,8 +929,7 @@ function normalizeMealItem(item) {
   if (!isISODate(date)) throw new Error('Imported meals must include a valid date.');
   if (!meal) throw new Error('Imported meals must include a meal label.');
   if (!plants.length) throw new Error('Imported meals must include at least one plant.');
-  const week = isISODate(item.week) ? item.week : getWeekStart(new Date(date + 'T00:00:00'));
-  return { id, date, week, meal, plants };
+  return { id, date, meal, plants };
 }
 
 function normalizePortableState(payload) {
@@ -827,7 +963,6 @@ function buildPortableExport() {
     meals: appState.meals.map(meal => ({
       id: meal.id,
       date: meal.date,
-      week: getMealWeek(meal),
       meal: meal.meal,
       plants: [...meal.plants],
     })),
@@ -838,9 +973,8 @@ function applyImportedState(nextState) {
   const normalizedState = normalizeAppStateSnapshot(nextState);
   appState = normalizedState;
   persist();
-  currentWeek = normalizedState.meals.length ? getLatestMealWeek(normalizedState.meals) : getWeekStart(new Date());
-  renderWeekOptions();
-  weekSel.value = currentWeek;
+  const latestDate = getLatestMealDate(normalizedState.meals) || todayISO;
+  currentPeriodKey = getPeriodKey(currentPeriod, latestDate);
   resetEntryForm();
   renderAll();
 }
@@ -875,18 +1009,15 @@ submitBtn.onclick = async () => {
   const wasEditing = editingMealId !== null;
   if (!date) { showSaveMessage('Please select a date.', '#C0392B', 0); return; }
   if (!selectedPlants.length) { showSaveMessage('Add at least one plant first.', '#C0392B', 0); return; }
-  const weekKey = getWeekStart(new Date(date + 'T00:00:00'));
   const entryId = editingMealId ?? Date.now();
-  const entry = { id: entryId, date, week: weekKey, meal, plants: [...selectedPlants] };
+  const entry = { id: entryId, date, meal, plants: [...selectedPlants] };
   try {
     await saveMealEntryRemote(entry);
     const existingIdx = appState.meals.findIndex(m => m.id === entryId);
     if (existingIdx === -1) appState.meals.push(entry);
     else appState.meals[existingIdx] = entry;
     persist();
-    currentWeek = weekKey;
-    renderWeekOptions();
-    weekSel.value = weekKey;
+    currentPeriodKey = getPeriodKey(currentPeriod, date);
     resetEntryForm();
     showSaveMessage(wasEditing ? 'Meal updated!' : 'Meal saved!', '#1A7A4E');
     renderAll();
@@ -932,22 +1063,26 @@ importFileInput.addEventListener('change', async event => {
 // ── History ───────────────────────────────────────────────────────────
 function renderHistory() {
   const u = uniquePlants();
+  const periodCopy = PERIOD_COPY[currentPeriod];
+  const countText = currentPeriod === 'week' ? u.size + ' / ' + GOAL : u.size + ' unique';
   const pillsEl = document.getElementById('unique-pills');
   pillsEl.innerHTML = '';
-  document.getElementById('h-unique-count').textContent = u.size + ' / ' + GOAL;
+  document.getElementById('h-unique-title').textContent = 'All unique plants ' + periodCopy.thisLabel;
+  document.getElementById('h-unique-count').textContent = countText;
   if (!u.size) {
-    pillsEl.innerHTML = '<span style="font-size:13px;color:var(--text-3);font-style:italic">No plants logged yet this week</span>';
+    pillsEl.innerHTML = '<span style="font-size:13px;color:var(--text-3);font-style:italic">No plants logged yet ' + periodCopy.thisLabel + '</span>';
   } else {
     [...u].sort().forEach(p => { const s = document.createElement('span'); s.className = 'u-pill'; s.textContent = p; pillsEl.appendChild(s); });
   }
 
   const tbody = document.getElementById('log-tbody');
   tbody.innerHTML = '';
-  const wm = weekMeals().slice().sort((a, b) => b.date.localeCompare(a.date) || b.id - a.id);
+  const meals = periodMeals().slice().sort((a, b) => b.date.localeCompare(a.date) || b.id - a.id);
   const empty = document.getElementById('log-empty');
-  if (!wm.length) { empty.style.display = 'block'; return; }
+  empty.textContent = 'No meals logged ' + periodCopy.thisLabel + ' yet.';
+  if (!meals.length) { empty.style.display = 'block'; return; }
   empty.style.display = 'none';
-  wm.forEach(entry => {
+  meals.forEach(entry => {
     const tr = document.createElement('tr'); tr.className = 'log-row';
     const plantsHtml = entry.plants.map(p => `<span class="lp">${p}</span>`).join('');
     tr.innerHTML = `
@@ -988,6 +1123,7 @@ function renderLibrary() {
   tbody.innerHTML = '';
   const empty = document.getElementById('lib-empty');
   document.getElementById('lib-count').textContent = appState.library.length + ' plants';
+  document.getElementById('lib-period-label').textContent = PERIOD_COPY[currentPeriod].thisLabel;
   if (!appState.library.length) { empty.style.display = 'block'; return; }
   empty.style.display = 'none';
   const freq = plantFreq();
@@ -998,7 +1134,7 @@ function renderLibrary() {
     tr.innerHTML = `
       <td class="lib-name" data-label="Plant">${p.name}</td>
       <td data-label="Category"><span class="cat-pill" style="background:${col.bg};border:1px solid ${col.border};color:${col.text}">${col.label}</span></td>
-      <td class="lib-count-cell" data-label="Times this week" style="color:var(--text-2)">${ct > 0 ? '<strong>x' + ct + '</strong>' : '-'}</td>
+      <td class="lib-count-cell" data-label="Times ${PERIOD_COPY[currentPeriod].thisLabel}" style="color:var(--text-2)">${ct > 0 ? '<strong>x' + ct + '</strong>' : '-'}</td>
       <td data-label="Actions">
         <div class="lib-actions">
           <button class="btn btn-danger" type="button" data-name="${p.name}">Remove</button>
@@ -1040,7 +1176,7 @@ document.getElementById('lib-add-btn').onclick = async () => {
 document.getElementById('lib-input').addEventListener('keydown', e => { if (e.key === 'Enter') document.getElementById('lib-add-btn').click(); });
 
 // ── Navigation ────────────────────────────────────────────────────────
-const PAGE_TITLES = { log: 'Log meal', history: 'This week', library: 'Plant library' };
+const PAGE_TITLES = { log: 'Log meal', history: 'History', library: 'Plant library' };
 function setActivePage(page) {
   document.querySelectorAll('.nav-item').forEach(item => item.classList.toggle('active', item.dataset.page === page));
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
@@ -1058,6 +1194,7 @@ document.querySelectorAll('.nav-item').forEach(item => {
 
 // ── Master render ─────────────────────────────────────────────────────
 function renderAll() {
+  renderPeriodControls();
   renderMetrics();
   renderQuickLib();
   renderChips();

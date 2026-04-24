@@ -336,15 +336,69 @@
     border-color: rgba(26, 122, 78, 0.18);
   }
 
-  .topbar-week {
+  .topbar-period {
     display: grid;
-    gap: 6px;
+    gap: 8px;
   }
 
-  .topbar-week label {
-    font-size: 12px;
-    font-weight: 600;
+  .period-tabs {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 4px;
+    padding: 4px;
+    border: 1px solid var(--border-md);
+    border-radius: var(--radius-sm);
+    background: rgba(255, 255, 255, 0.66);
+  }
+
+  .period-tab,
+  .period-nav-btn {
+    min-height: 36px;
+    border: none;
+    border-radius: 8px;
     color: var(--text-2);
+    background: transparent;
+    cursor: pointer;
+    transition: background 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
+  }
+
+  .period-tab {
+    padding: 8px 6px;
+    font-size: 12px;
+    font-weight: 700;
+  }
+
+  .period-tab:hover,
+  .period-nav-btn:hover {
+    background: rgba(46, 158, 104, 0.1);
+    color: var(--accent-dark);
+  }
+
+  .period-tab.active {
+    background: #FFFFFF;
+    color: var(--accent-dark);
+    box-shadow: 0 1px 6px rgba(58, 56, 52, 0.1);
+  }
+
+  .period-range {
+    display: grid;
+    grid-template-columns: 40px minmax(0, 1fr) 40px;
+    gap: 6px;
+    align-items: center;
+  }
+
+  .period-nav-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 44px;
+    border: 1px solid var(--border-md);
+    background: var(--surface-2);
+  }
+
+  .period-nav-btn svg {
+    width: 16px;
+    height: 16px;
   }
 
   .content {
@@ -628,7 +682,8 @@
   .field input,
   .field select,
   .field textarea,
-  .topbar-week select,
+  .topbar-period select,
+  .topbar-period input,
   .lib-add-row input,
   .lib-add-row select {
     width: 100%;
@@ -646,7 +701,8 @@
 
   .field input:focus,
   .field select:focus,
-  .topbar-week select:focus,
+  .topbar-period select:focus,
+  .topbar-period input:focus,
   .lib-add-row input:focus,
   .lib-add-row select:focus {
     border-color: rgba(26, 122, 78, 0.5);
@@ -655,7 +711,7 @@
   }
 
   .field select,
-  .topbar-week select,
+  .topbar-period select,
   .lib-add-row select {
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' fill='none'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%236B6760' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
     background-repeat: no-repeat;
@@ -1052,7 +1108,7 @@
 
   @media (min-width: 720px) {
     .topbar {
-      grid-template-columns: minmax(0, 1fr) minmax(260px, 340px);
+      grid-template-columns: minmax(0, 1fr) minmax(320px, 420px);
       align-items: end;
     }
 
@@ -1240,6 +1296,10 @@
     .metrics-row {
       grid-template-columns: repeat(4, minmax(0, 1fr));
       gap: 14px;
+    }
+
+    .metrics-row.period-neutral {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
     }
 
     .form-layout {
