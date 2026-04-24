@@ -4,6 +4,22 @@ All notable Planterly changes are documented here.
 
 Planterly uses semantic versioning: `MAJOR.MINOR.PATCH`. Major and minor version updates require explicit user consent before they are created. Patch entries may document fixes, documentation updates, and compatibility refinements that do not broaden the app's feature scope.
 
+## v0.2.0 - 2026-04-24
+
+### Major
+
+- No major release changes.
+
+### Minor
+
+- Added a period comparison bar graph to the History page.
+- Matched chart comparisons to the active Day, Week, Month, and Year controls.
+- Added selected-period highlighting and auto-scaled horizontal bars for unique plant counts.
+
+### Patch
+
+- Added responsive chart styling for mobile and desktop layouts.
+
 ## v0.1.0 - 2026-04-24
 
 ### Major
