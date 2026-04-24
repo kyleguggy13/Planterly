@@ -961,6 +961,65 @@
     gap: 8px;
   }
 
+  .period-chart {
+    display: grid;
+    gap: 10px;
+  }
+
+  .period-chart-row {
+    display: grid;
+    grid-template-columns: minmax(58px, 76px) minmax(0, 1fr) 32px;
+    align-items: center;
+    gap: 10px;
+    min-height: 32px;
+  }
+
+  .period-chart-label,
+  .period-chart-count {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--text-2);
+  }
+
+  .period-chart-label {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .period-chart-count {
+    text-align: right;
+  }
+
+  .period-chart-track {
+    height: 12px;
+    border-radius: 999px;
+    background: rgba(58, 56, 52, 0.08);
+    overflow: hidden;
+  }
+
+  .period-chart-fill {
+    height: 100%;
+    border-radius: inherit;
+    background: linear-gradient(90deg, var(--accent) 0%, var(--accent-dark) 100%);
+    transition: width 0.28s ease;
+  }
+
+  .period-chart-row.is-selected {
+    min-height: 36px;
+  }
+
+  .period-chart-row.is-selected .period-chart-label,
+  .period-chart-row.is-selected .period-chart-count {
+    color: var(--accent-dark);
+  }
+
+  .period-chart-row.is-selected .period-chart-track {
+    height: 14px;
+    background: var(--green-50);
+    box-shadow: inset 0 0 0 1px rgba(26, 122, 78, 0.12);
+  }
+
   .u-pill {
     background: var(--green-50);
     border: 1px solid var(--green-100);
@@ -1087,6 +1146,11 @@
     .metrics-row,
     .field-grid {
       grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .period-chart-row {
+      grid-template-columns: 96px minmax(0, 1fr) 40px;
+      gap: 12px;
     }
 
     .form-actions {
