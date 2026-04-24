@@ -105,9 +105,6 @@
     box-shadow: 0 24px 48px rgba(10, 12, 10, 0.28);
     transform: translateX(-100%);
     transition: transform 0.24s ease;
-  }
-
-  .mobile-drawer.is-open {
     pointer-events: auto;
   }
 
