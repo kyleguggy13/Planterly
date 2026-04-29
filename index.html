@@ -339,50 +339,6 @@
 </div><!-- /app-shell -->
 
 <script>
-// ── Google Sign-in ────────────────────────────────────────────────────────────
-// import {
-//   signInWithGoogle,
-//   logOut,
-//   watchAuth,
-//   loadMeals,
-//   loadLibrary
-// } from "./firebase.js";
-
-// const loginBtn = document.getElementById("loginBtn");
-// const logoutBtn = document.getElementById("logoutBtn");
-// const userStatus = document.getElementById("userStatus");
-
-// let currentUser = null;
-
-// loginBtn.addEventListener("click", async () => {
-//   await signInWithGoogle();
-// });
-
-// logoutBtn.addEventListener("click", async () => {
-//   await logOut();
-// });
-
-// watchAuth(async user => {
-//   currentUser = user;
-
-//   if (user) {
-//     loginBtn.style.display = "none";
-//     logoutBtn.style.display = "inline-block";
-//     userStatus.textContent = `Signed in as ${user.email}`;
-
-//     const meals = await loadMeals(user.uid);
-//     const library = await loadLibrary(user.uid);
-
-//     console.log("Meals from Firestore:", meals);
-//     console.log("Library from Firestore:", library);
-
-//     // Later: assign these into your existing app state and re-render.
-//   } else {
-//     loginBtn.style.display = "inline-block";
-//     logoutBtn.style.display = "none";
-//     userStatus.textContent = "Not signed in";
-//   }
-// });
 
 // ── State ────────────────────────────────────────────────────────────
 const CAT = {
@@ -1299,7 +1255,7 @@ function renderAll() {
 renderAll();
 </script>
 <!-- <script type="module" src="./firebase.js"></script> -->
-<script type="module" src="./app.js"></script>
+<script type="module" src="js/app.js"></script>
 </body>
 </html>
 
