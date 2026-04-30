@@ -101,6 +101,12 @@
         </svg>
         <span>Plant library</span>
       </button>
+      <button class="nav-item" data-page="barchart" type="button">
+        <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+          <path d="M3 3h4v10H3zM9 3h4v10H9z"/>
+        </svg>
+        <span>Bar Chart</span>
+      </button>
     </div>
     <div class="sidebar-tools">
       <button
@@ -334,9 +340,32 @@
         </div>
       </div>
 
+      <div id="page-barchart" class="page page-stack">
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">Plant library</span>
+            <span class="card-meta" id="lib-count"></span>
+          </div>
+          <div class="chartMenu">
+            <p>Plant Log Graph</p>
+          </div>
+          <div class="chartCard">
+            <div class="chartBox">
+              <div class="container">
+                <div class="containerBody">
+                  <canvas id="myChart"></canvas>
+                </div>
+              </div>
+              
+            </div>
+          </div>
+        </div>
+      </div>
+
     </div><!-- /content -->
   </div><!-- /main -->
 </div><!-- /app-shell -->
+
 
 <script>
 
@@ -1256,6 +1285,8 @@ renderAll();
 </script>
 <!-- <script type="module" src="./firebase.js"></script> -->
 <script type="module" src="js/app.js"></script>
+<script type="text/javascript" src="https://cdn.jsdelivr.net/npm/chart.js/dist/chart.umd.min.js"></script>
+<script type="module" src="js/chart.js"></script>
 </body>
 </html>
 
