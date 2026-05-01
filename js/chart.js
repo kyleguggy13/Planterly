@@ -1,10 +1,10 @@
 // setup 
 
 const data = {
-    labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+    labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
     datasets: [{
     label: 'Weekly Sales',
-    data: [18, 12, 6, 9, 12, 3, 9],
+    data: [18, 12, 6, 9, 12, 3, 9, 18, 12, 6, 9, 12, 3, 9],
     backgroundColor: [
         'rgba(255, 26, 104, 0.2)',
         'rgba(54, 162, 235, 0.2)',
@@ -48,10 +48,12 @@ const myChart = new Chart(
 );
 
 const containerBody = document.querySelector('.containerBody');
+const totalLabels = myChart.data.labels.length;
 
-if(myChart.data.labels.length > 5) {
-    containerBody.style.width = '800px';
-}
+if(totalLabels > 7) {
+    const newWidth = 700 + ((totalLabels - 7) * 30);
+    containerBody.style.width = `${newWidth}px`;
+};
 
 // Instantly assign Chart.js version
 const chartVersion = document.getElementById('chartVersion');
