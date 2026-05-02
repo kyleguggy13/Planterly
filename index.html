@@ -101,12 +101,6 @@
         </svg>
         <span>Plant library</span>
       </button>
-      <button class="nav-item" data-page="barchart" type="button">
-        <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
-          <path d="M3 3h4v10H3zM9 3h4v10H9z"/>
-        </svg>
-        <span>Bar Chart</span>
-      </button>
     </div>
     <div class="sidebar-tools">
       <button
@@ -270,7 +264,11 @@
             <span class="card-meta" id="h-chart-meta"></span>
           </div>
           <div class="card-body">
-            <div class="period-chart" id="period-chart"></div>
+            <div class="period-chart-scroll" id="period-chart">
+              <div class="period-chart-canvas-wrap" id="period-chart-canvas-wrap">
+                <canvas id="period-chart-canvas" role="img" aria-label="Unique plants by selected period"></canvas>
+              </div>
+            </div>
             <div id="period-chart-empty" class="empty" style="display:none">No plants logged in these periods yet.</div>
           </div>
         </div>
@@ -336,28 +334,6 @@
               <tbody id="lib-tbody"></tbody>
             </table>
             <div id="lib-empty" class="empty" style="display:none">Library is empty. Add some plants above.</div>
-          </div>
-        </div>
-      </div>
-
-      <div id="page-barchart" class="page page-stack">
-        <div class="card">
-          <div class="card-header">
-            <span class="card-title">Plant library</span>
-            <span class="card-meta" id="lib-count"></span>
-          </div>
-          <div class="chartMenu">
-            <p>Plant Log Graph</p>
-          </div>
-          <div class="chartCard">
-            <div class="chartBox">
-              <div class="container">
-                <div class="containerBody">
-                  <canvas id="myChart"></canvas>
-                </div>
-              </div>
-              
-            </div>
           </div>
         </div>
       </div>
@@ -759,87 +735,6 @@ const formWeek = () => dateInput.value ? getWeekStart(dateInput.value) : getWeek
 const formWeekMeals = () => appState.meals.filter(m => getMealWeek(m) === formWeek() && m.id !== editingMealId);
 const uniquePlants = () => { const s = new Set(); periodMeals().forEach(m => m.plants.forEach(p => s.add(p))); return s; };
 const plantFreq = () => { const f = {}; periodMeals().forEach(m => m.plants.forEach(p => { f[p] = (f[p]||0)+1; })); return f; };
-
-function getComparisonPeriodKeys(period = currentPeriod, key = currentPeriodKey) {
-  const count = period === 'day' ? 7 : period === 'week' ? 8 : period === 'month' ? 12 : 5;
-  return Array.from({ length: count }, (_, index) => shiftPeriodKey(period, key, index - count + 1));
-}
-
-function getUniquePlantCountForPeriod(period, key) {
-  const { start, end } = getPeriodRange(period, key);
-  const plants = new Set();
-  appState.meals.forEach(meal => {
-    if (!isISODate(meal.date) || meal.date < start || meal.date > end || !Array.isArray(meal.plants)) return;
-    meal.plants.forEach(plant => plants.add(plant));
-  });
-  return plants.size;
-}
-
-function formatChartPeriodLabel(period, key) {
-  const { start } = getPeriodRange(period, key);
-  const startDate = parseISODateLocal(start);
-  if (!startDate) return key;
-  if (period === 'day' || period === 'week') return startDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-  if (period === 'month') return startDate.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
-  return key;
-}
-
-function getPluralPeriodLabel(period) {
-  return PERIOD_COPY[period].label + 's';
-}
-
-function renderPeriodChart() {
-  const chart = document.getElementById('period-chart');
-  const empty = document.getElementById('period-chart-empty');
-  const periodLabel = PERIOD_COPY[currentPeriod].label;
-  const pluralLabel = getPluralPeriodLabel(currentPeriod);
-  const items = getComparisonPeriodKeys().map(key => ({
-    key,
-    label: formatChartPeriodLabel(currentPeriod, key),
-    fullLabel: formatPeriodLabel(currentPeriod, key),
-    count: getUniquePlantCountForPeriod(currentPeriod, key),
-  }));
-  const maxCount = Math.max(0, ...items.map(item => item.count));
-
-  document.getElementById('h-chart-title').textContent = 'Unique plants by ' + periodLabel;
-  document.getElementById('h-chart-meta').textContent = items.length + ' ' + pluralLabel;
-  chart.innerHTML = '';
-
-  if (!maxCount) {
-    chart.style.display = 'none';
-    empty.style.display = 'block';
-    empty.textContent = 'No plants logged in these ' + pluralLabel + ' yet.';
-    return;
-  }
-
-  chart.style.display = 'grid';
-  empty.style.display = 'none';
-
-  items.forEach(item => {
-    const row = document.createElement('div');
-    row.className = 'period-chart-row' + (item.key === currentPeriodKey ? ' is-selected' : '');
-    row.title = item.fullLabel + ': ' + item.count + (item.count === 1 ? ' unique plant' : ' unique plants');
-
-    const label = document.createElement('div');
-    label.className = 'period-chart-label';
-    label.textContent = item.label;
-
-    const track = document.createElement('div');
-    track.className = 'period-chart-track';
-
-    const fill = document.createElement('div');
-    fill.className = 'period-chart-fill';
-    fill.style.width = item.count ? Math.max(8, Math.round(item.count / maxCount * 100)) + '%' : '0%';
-    track.appendChild(fill);
-
-    const count = document.createElement('div');
-    count.className = 'period-chart-count';
-    count.textContent = item.count;
-
-    row.append(label, track, count);
-    chart.appendChild(row);
-  });
-}
 
 // ── Metrics ───────────────────────────────────────────────────────────
 function renderMetrics() {
@@ -1284,9 +1179,9 @@ function renderAll() {
 renderAll();
 </script>
 <!-- <script type="module" src="./firebase.js"></script> -->
-<script type="module" src="js/app.js"></script>
 <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/chart.js/dist/chart.umd.min.js"></script>
-<script type="module" src="js/chart.js"></script>
+<script src="js/history.js"></script>
+<script type="module" src="js/app.js"></script>
 </body>
 </html>
 

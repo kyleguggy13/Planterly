@@ -961,63 +961,39 @@
     gap: 8px;
   }
 
-  .period-chart {
-    display: grid;
-    gap: 10px;
+  .period-chart-scroll {
+    width: 100%;
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding-bottom: 6px;
+    scrollbar-color: rgba(26, 122, 78, 0.42) rgba(58, 56, 52, 0.08);
+    scrollbar-width: thin;
   }
 
-  .period-chart-row {
-    display: grid;
-    grid-template-columns: minmax(58px, 76px) minmax(0, 1fr) 32px;
-    align-items: center;
-    gap: 10px;
-    min-height: 32px;
+  .period-chart-scroll::-webkit-scrollbar {
+    height: 8px;
   }
 
-  .period-chart-label,
-  .period-chart-count {
-    font-size: 12px;
-    font-weight: 700;
-    color: var(--text-2);
-  }
-
-  .period-chart-label {
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-
-  .period-chart-count {
-    text-align: right;
-  }
-
-  .period-chart-track {
-    height: 12px;
-    border-radius: 999px;
+  .period-chart-scroll::-webkit-scrollbar-track {
     background: rgba(58, 56, 52, 0.08);
-    overflow: hidden;
+    border-radius: 999px;
   }
 
-  .period-chart-fill {
-    height: 100%;
-    border-radius: inherit;
-    background: linear-gradient(90deg, var(--accent) 0%, var(--accent-dark) 100%);
-    transition: width 0.28s ease;
+  .period-chart-scroll::-webkit-scrollbar-thumb {
+    background: rgba(26, 122, 78, 0.42);
+    border-radius: 999px;
   }
 
-  .period-chart-row.is-selected {
-    min-height: 36px;
+  .period-chart-canvas-wrap {
+    position: relative;
+    height: 260px;
+    min-width: 560px;
   }
 
-  .period-chart-row.is-selected .period-chart-label,
-  .period-chart-row.is-selected .period-chart-count {
-    color: var(--accent-dark);
-  }
-
-  .period-chart-row.is-selected .period-chart-track {
-    height: 14px;
-    background: var(--green-50);
-    box-shadow: inset 0 0 0 1px rgba(26, 122, 78, 0.12);
+  .period-chart-canvas-wrap canvas {
+    display: block;
+    width: 100% !important;
+    height: 100% !important;
   }
 
   .u-pill {
@@ -1146,11 +1122,6 @@
     .metrics-row,
     .field-grid {
       grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-
-    .period-chart-row {
-      grid-template-columns: 96px minmax(0, 1fr) 40px;
-      gap: 12px;
     }
 
     .form-actions {
@@ -1450,39 +1421,3 @@
       background: var(--stone-50);
     }
   }
-
-
-/* Scrolling bar graph styles */
-.chartMenu {
-  width: 100vw;
-  height: 40px;
-  background: #1A1A1A;
-  color: rgba(54, 162, 235, 1);
-}
-.chartMenu p {
-  padding: 10px;
-  font-size: 20px;
-}
-.chartCard {
-  width: 90vw;
-  height: calc(100vh - 40px);
-  background: rgba(54, 162, 235, 0.2);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-.chartBox {
-  /* width: 700px; */
-  padding: 20px;
-  border-radius: 20px;
-  border: solid 3px rgba(54, 162, 235, 1);
-  background: white;
-}
-.container {
-  width: 700px;
-  max-width: 500px;
-  overflow-x: scroll;
-}
-.containerBody {
-  height: 200px;
-}
