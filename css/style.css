@@ -229,7 +229,7 @@
 
   .sidebar-nav {
     display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(4, minmax(0, 1fr));
     gap: 10px;
   }
 
@@ -589,6 +589,94 @@
   .metric-bar-fill {
     height: 100%;
     border-radius: 999px;
+    background: var(--accent);
+    transition: width 0.5s ease;
+  }
+
+  .test-grid-panel {
+    display: grid;
+    gap: 10px;
+  }
+
+  .test-grid-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 0 2px;
+  }
+
+  .test-metrics-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1px;
+    padding: 1px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    background: var(--border);
+  }
+
+  .test-metric-cell {
+    min-width: 0;
+    min-height: 92px;
+    display: grid;
+    align-content: start;
+    gap: 6px;
+    padding: 12px;
+    background: rgba(255, 255, 255, 0.9);
+  }
+
+  .test-metric-label {
+    min-width: 0;
+    overflow-wrap: anywhere;
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--text-3);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .test-metric-value {
+    min-width: 0;
+    overflow-wrap: anywhere;
+    font-family: "DM Serif Display", serif;
+    font-size: 24px;
+    font-weight: 600;
+    line-height: 1;
+    color: var(--text);
+  }
+
+  .test-metric-value.accent {
+    color: var(--accent-dark);
+  }
+
+  .test-metric-value-text {
+    font-family: "DM Sans", sans-serif;
+    font-size: 15px;
+    line-height: 1.15;
+  }
+
+  .test-metric-sub {
+    min-width: 0;
+    overflow-wrap: anywhere;
+    font-size: 12px;
+    line-height: 1.3;
+    color: var(--text-2);
+  }
+
+  .test-metric-bar {
+    width: 100%;
+    height: 5px;
+    margin-top: 4px;
+    overflow: hidden;
+    border-radius: 999px;
+    background: rgba(58, 56, 52, 0.08);
+  }
+
+  .test-metric-bar-fill {
+    height: 100%;
+    border-radius: inherit;
     background: var(--accent);
     transition: width 0.5s ease;
   }
@@ -1333,6 +1421,14 @@
     }
 
     .metrics-row.period-neutral {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .test-metrics-grid {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+
+    .test-metrics-grid.period-neutral {
       grid-template-columns: repeat(3, minmax(0, 1fr));
     }
 
