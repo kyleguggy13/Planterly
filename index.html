@@ -104,12 +104,6 @@
         </svg>
         <span>Plant library</span>
       </button>
-      <button class="nav-item" data-page="test-grid" type="button">
-        <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
-          <path d="M3 3h4v10H3zM9 3h4v10H9z"/>
-        </svg>
-        <span>Test Grid</span>
-      </button>
     </div>
     <div class="sidebar-tools">
       <button
@@ -189,26 +183,26 @@
         </div>
       </section>
 
-      <div class="metrics-row">
-        <div class="metric-card">
-          <span class="metric-label">Unique plants:</span>
-          <span class="metric-value accent" id="m-unique">0</span>
-          <div class="metric-bar" id="m-unique-bar"><div class="metric-bar-fill" id="m-bar" style="width:0%"></div></div>
+      <div class="test-metrics-grid" id="test-metrics-grid">
+        <div class="test-metric-cell">
+          <span class="test-metric-label">Unique plants</span>
+          <span class="test-metric-value accent" id="tg-unique">0</span>
+          <div class="test-metric-bar" id="tg-unique-bar"><div class="test-metric-bar-fill" id="tg-bar" style="width:0%"></div></div>
         </div>
-        <div class="metric-card" id="m-goal-card">
-          <span class="metric-label">Goal progress:</span>
-          <span class="metric-value" id="m-pct">0%</span>
-          <div class="metric-sub" id="m-remaining">30 plants to go</div>
+        <div class="test-metric-cell" id="tg-goal-cell">
+          <span class="test-metric-label">Goal progress</span>
+          <span class="test-metric-value" id="tg-pct">0%</span>
+          <span class="test-metric-sub" id="tg-remaining">30 plants to go</span>
         </div>
-        <div class="metric-card">
-          <span class="metric-label">Meals logged:</span>
-          <span class="metric-value" id="m-meals">0</span>
-          <div class="metric-sub" id="m-days">0 days tracked</div>
+        <div class="test-metric-cell">
+          <span class="test-metric-label">Meals logged</span>
+          <span class="test-metric-value" id="tg-meals">0</span>
+          <span class="test-metric-sub" id="tg-days">0 days tracked</span>
         </div>
-        <div class="metric-card">
-          <span class="metric-label">Most frequent:</span>
-          <span class="metric-value metric-value-text" id="m-top">-</span>
-          <div class="metric-sub" id="m-top-ct"></div>
+        <div class="test-metric-cell">
+          <span class="test-metric-label">Most frequent</span>
+          <span class="test-metric-value test-metric-value-text" id="tg-top">-</span>
+          <span class="test-metric-sub" id="tg-top-ct"></span>
         </div>
       </div>
 
@@ -343,37 +337,6 @@
               <tbody id="lib-tbody"></tbody>
             </table>
             <div id="lib-empty" class="empty" style="display:none">Library is empty. Add some plants above.</div>
-          </div>
-        </div>
-      </div>
-
-      <div id="page-test-grid" class="page page-stack">
-        <div class="test-grid-panel">
-          <div class="test-grid-header">
-            <span class="card-title">Test Grid</span>
-            <span class="card-meta" id="tg-period-label">This week</span>
-          </div>
-          <div class="test-metrics-grid" id="test-metrics-grid">
-            <div class="test-metric-cell">
-              <span class="test-metric-label">Unique plants</span>
-              <span class="test-metric-value accent" id="tg-unique">0</span>
-              <div class="test-metric-bar" id="tg-unique-bar"><div class="test-metric-bar-fill" id="tg-bar" style="width:0%"></div></div>
-            </div>
-            <div class="test-metric-cell" id="tg-goal-cell">
-              <span class="test-metric-label">Goal progress</span>
-              <span class="test-metric-value" id="tg-pct">0%</span>
-              <span class="test-metric-sub" id="tg-remaining">30 plants to go</span>
-            </div>
-            <div class="test-metric-cell">
-              <span class="test-metric-label">Meals logged</span>
-              <span class="test-metric-value" id="tg-meals">0</span>
-              <span class="test-metric-sub" id="tg-days">0 days tracked</span>
-            </div>
-            <div class="test-metric-cell">
-              <span class="test-metric-label">Most frequent</span>
-              <span class="test-metric-value test-metric-value-text" id="tg-top">-</span>
-              <span class="test-metric-sub" id="tg-top-ct"></span>
-            </div>
           </div>
         </div>
       </div>
@@ -780,34 +743,22 @@ const plantFreq = () => { const f = {}; periodMeals().forEach(m => m.plants.forE
 function renderMetrics() {
   const u = uniquePlants(); const cnt = u.size;
   const isWeek = currentPeriod === 'week';
-  document.querySelector('.metrics-row').classList.toggle('period-neutral', !isWeek);
   document.getElementById('test-metrics-grid').classList.toggle('period-neutral', !isWeek);
-  document.getElementById('m-unique').textContent = cnt;
   document.getElementById('tg-unique').textContent = cnt;
   const pct = Math.min(100, Math.round(cnt / GOAL * 100));
-  document.getElementById('m-pct').textContent = pct + '%';
   document.getElementById('tg-pct').textContent = pct + '%';
-  document.getElementById('m-bar').style.width = pct + '%';
   document.getElementById('tg-bar').style.width = pct + '%';
-  document.getElementById('m-remaining').textContent = cnt >= GOAL ? 'Goal reached.' : (GOAL - cnt) + ' plants to go';
   document.getElementById('tg-remaining').textContent = cnt >= GOAL ? 'Goal reached.' : (GOAL - cnt) + ' plants to go';
-  document.getElementById('m-goal-card').hidden = !isWeek;
-  document.getElementById('m-unique-bar').hidden = !isWeek;
   document.getElementById('tg-goal-cell').hidden = !isWeek;
   document.getElementById('tg-unique-bar').hidden = !isWeek;
   const meals = periodMeals();
-  document.getElementById('m-meals').textContent = meals.length;
   document.getElementById('tg-meals').textContent = meals.length;
   const days = new Set(meals.map(m => m.date)).size;
-  document.getElementById('m-days').textContent = days + (days === 1 ? ' day tracked' : ' days tracked');
   document.getElementById('tg-days').textContent = days + (days === 1 ? ' day tracked' : ' days tracked');
   const freq = plantFreq();
   const top = Object.entries(freq).sort((a,b) => b[1]-a[1])[0];
-  document.getElementById('m-top').textContent = top ? top[0] : '-';
   document.getElementById('tg-top').textContent = top ? top[0] : '-';
-  document.getElementById('m-top-ct').textContent = top ? 'x' + top[1] + ' ' + PERIOD_COPY[currentPeriod].thisLabel : '';
   document.getElementById('tg-top-ct').textContent = top ? 'x' + top[1] + ' ' + PERIOD_COPY[currentPeriod].thisLabel : '';
-  document.getElementById('tg-period-label').textContent = PERIOD_COPY[currentPeriod].thisLabel;
 }
 
 // ── Quick library ─────────────────────────────────────────────────────
@@ -1200,7 +1151,7 @@ document.getElementById('lib-add-btn').onclick = async () => {
 document.getElementById('lib-input').addEventListener('keydown', e => { if (e.key === 'Enter') document.getElementById('lib-add-btn').click(); });
 
 // ── Navigation ────────────────────────────────────────────────────────
-const PAGE_TITLES = { log: 'Log meal', history: 'History', library: 'Plant library', 'test-grid': 'Test Grid' };
+const PAGE_TITLES = { log: 'Log meal', history: 'History', library: 'Plant library' };
 function setActivePage(page) {
   document.querySelectorAll('.nav-item').forEach(item => item.classList.toggle('active', item.dataset.page === page));
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));

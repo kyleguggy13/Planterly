@@ -229,7 +229,7 @@
 
   .sidebar-nav {
     display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 10px;
   }
 
@@ -415,7 +415,7 @@
     border-radius: var(--radius-xl);
     background: linear-gradient(135deg, #123726 0%, #1B5E40 48%, #E4C795 150%);
     color: #FFFFFF;
-    box-shadow: 0 20px 40px rgba(14, 79, 49, 0.18);
+    /* box-shadow: 0 20px 40px rgba(14, 79, 49, 0.18); */
   }
 
   .hero-panel.is-hidden {
@@ -525,85 +525,6 @@
 
   .drawer-utility-panel {
     padding-top: 2px;
-  }
-
-  .metrics-row {
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: 12px;
-    padding-top: 18px;
-  }
-
-  .metric-card {
-    background: rgba(255, 255, 255, 0.9);
-    border: 1px solid var(--border);
-    border-radius: 18px;
-    padding: 14px;
-    /* box-shadow: var(--shadow-sm); */
-    backdrop-filter: blur(10px);
-  }
-
-  .metric-label {
-    font-size: 11px;
-    font-weight: 600;
-    color: var(--text-3);
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    margin-bottom: 10px;
-  }
-
-  .metric-value {
-    font-family: "DM Serif Display", serif;
-    font-size: 16px;
-    font-weight: 600;
-    line-height: 1;
-    color: var(--text);
-  }
-
-  .metric-value.accent {
-    color: var(--accent-dark);
-  }
-
-  .metric-value-text {
-    font-family: "DM Sans", sans-serif;
-    font-size: 16px;
-    font-weight: 600;
-    line-height: 1.0;
-    padding-top: 8px;
-  }
-
-  .metric-sub {
-    font-size: 13px;
-    color: var(--text-2);
-    margin-top: 8px;
-  }
-
-  .metric-bar {
-    background: rgba(58, 56, 52, 0.08);
-    border-radius: 999px;
-    height: 6px;
-    margin-top: 12px;
-    overflow: hidden;
-  }
-
-  .metric-bar-fill {
-    height: 100%;
-    border-radius: 999px;
-    background: var(--accent);
-    transition: width 0.5s ease;
-  }
-
-  .test-grid-panel {
-    display: grid;
-    gap: 10px;
-  }
-
-  .test-grid-header {
-    display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    gap: 12px;
-    padding: 0 2px;
   }
 
   .test-metrics-grid {
@@ -1209,7 +1130,6 @@
   }
 
   @media (min-width: 560px) {
-    .metrics-row,
     .field-grid {
       grid-template-columns: repeat(2, minmax(0, 1fr));
     }
@@ -1413,15 +1333,6 @@
     .hero-title {
       font-size: 44px;
       max-width: 11ch;
-    }
-
-    .metrics-row {
-      grid-template-columns: repeat(4, minmax(0, 1fr));
-      gap: 14px;
-    }
-
-    .metrics-row.period-neutral {
-      grid-template-columns: repeat(3, minmax(0, 1fr));
     }
 
     .test-metrics-grid {
