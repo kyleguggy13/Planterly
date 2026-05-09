@@ -176,6 +176,11 @@
 
     <div class="content">
       <section class="hero-panel" id="hero-panel">
+        <button class="hero-close-btn" id="hero-close-btn" type="button" aria-label="Close hero panel">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true">
+            <path d="M4 4l8 8M12 4 4 12" stroke-linecap="round"/>
+          </svg>
+        </button>
         <div class="hero-content">
           <p class="hero-kicker">30 plants a week</p>
           <h1 class="hero-title">Build variety meal by meal.</h1>
@@ -183,26 +188,26 @@
         </div>
       </section>
 
-      <div class="test-metrics-grid" id="test-metrics-grid">
-        <div class="test-metric-cell">
-          <span class="test-metric-label">Unique plants</span>
-          <span class="test-metric-value accent" id="tg-unique">0</span>
-          <div class="test-metric-bar" id="tg-unique-bar"><div class="test-metric-bar-fill" id="tg-bar" style="width:0%"></div></div>
+      <div class="metrics-grid" id="metrics-grid">
+        <div class="metric-cell">
+          <span class="metric-label">Unique plants</span>
+          <span class="metric-value accent" id="tg-unique">0</span>
+          <div class="metric-bar" id="tg-unique-bar"><div class="metric-bar-fill" id="tg-bar" style="width:0%"></div></div>
         </div>
-        <div class="test-metric-cell" id="tg-goal-cell">
-          <span class="test-metric-label">Goal progress</span>
-          <span class="test-metric-value" id="tg-pct">0%</span>
-          <span class="test-metric-sub" id="tg-remaining">30 plants to go</span>
+        <div class="metric-cell" id="tg-goal-cell">
+          <span class="metric-label">Goal progress</span>
+          <span class="metric-value" id="tg-pct">0%</span>
+          <span class="metric-sub" id="tg-remaining">30 plants to go</span>
         </div>
-        <div class="test-metric-cell">
-          <span class="test-metric-label">Meals logged</span>
-          <span class="test-metric-value" id="tg-meals">0</span>
-          <span class="test-metric-sub" id="tg-days">0 days tracked</span>
+        <div class="metric-cell">
+          <span class="metric-label">Meals logged</span>
+          <span class="metric-value" id="tg-meals">0</span>
+          <span class="metric-sub" id="tg-days">0 days tracked</span>
         </div>
-        <div class="test-metric-cell">
-          <span class="test-metric-label">Most frequent</span>
-          <span class="test-metric-value test-metric-value-text" id="tg-top">-</span>
-          <span class="test-metric-sub" id="tg-top-ct"></span>
+        <div class="metric-cell">
+          <span class="metric-label">Most frequent</span>
+          <span class="metric-value metric-value-text" id="tg-top">-</span>
+          <span class="metric-sub" id="tg-top-ct"></span>
         </div>
       </div>
 
@@ -445,6 +450,7 @@ let acIndex = -1;
 let editingMealId = null;
 let saveMsgTimer = null;
 let dataStatusTimer = null;
+let heroDismissed = false;
 
 const dateInput = document.getElementById('f-date');
 const mealInput = document.getElementById('f-meal');
@@ -468,6 +474,7 @@ const utilityMenuContent = document.getElementById('utility-menu-content');
 const mobileUtilityHost = document.getElementById('mobile-utility-host');
 const desktopUtilityHost = document.getElementById('desktop-utility-host');
 const heroPanel = document.getElementById('hero-panel');
+const heroCloseBtn = document.getElementById('hero-close-btn');
 const desktopLayoutQuery = window.matchMedia('(min-width: 1024px)');
 
 let mobileDrawerOpen = false;
@@ -580,10 +587,16 @@ document.addEventListener('keydown', event => {
 });
 
 function syncHeroPanel(page) {
-  const showHero = page === 'log';
+  const showHero = page === 'log' && !heroDismissed;
   heroPanel.hidden = !showHero;
   heroPanel.classList.toggle('is-hidden', !showHero);
 }
+
+heroCloseBtn.addEventListener('click', () => {
+  heroDismissed = true;
+  const activePage = document.querySelector('.nav-item.active')?.dataset.page || 'log';
+  syncHeroPanel(activePage);
+});
 
 const hasRemoteSync = () => Boolean(window.planterlySync?.isSignedIn?.());
 const ensureRemoteSyncReady = () => {
@@ -743,7 +756,7 @@ const plantFreq = () => { const f = {}; periodMeals().forEach(m => m.plants.forE
 function renderMetrics() {
   const u = uniquePlants(); const cnt = u.size;
   const isWeek = currentPeriod === 'week';
-  document.getElementById('test-metrics-grid').classList.toggle('period-neutral', !isWeek);
+  document.getElementById('metrics-grid').classList.toggle('period-neutral', !isWeek);
   document.getElementById('tg-unique').textContent = cnt;
   const pct = Math.min(100, Math.round(cnt / GOAL * 100));
   document.getElementById('tg-pct').textContent = pct + '%';
