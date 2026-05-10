@@ -8,6 +8,15 @@
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="css/style.css">
 </head>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-XHD08RYSXP"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-XHD08RYSXP');
+</script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
 
 <body>
@@ -638,6 +647,12 @@ async function replaceRemoteStateSnapshot(nextState) {
   ensureRemoteSyncReady();
   await window.planterlySync.replaceRemoteState(nextState);
 }
+function trackAppEvent(eventName, eventParams = {}) {
+  window.planterlyAnalytics?.trackEvent?.(eventName, eventParams);
+}
+function trackAppScreenView(page) {
+  window.planterlyAnalytics?.trackScreenView?.(page);
+}
 
 // ── Period selector ───────────────────────────────────────────────────
 const periodSel = document.getElementById('period-sel');
@@ -1004,6 +1019,11 @@ submitBtn.onclick = async () => {
     if (existingIdx === -1) appState.meals.push(entry);
     else appState.meals[existingIdx] = entry;
     persist();
+    trackAppEvent(wasEditing ? 'meal_updated' : 'meal_saved', {
+      meal_type: entry.meal,
+      plant_count: entry.plants.length,
+      sync_enabled: hasRemoteSync() ? 1 : 0,
+    });
     currentPeriodKey = getPeriodKey(currentPeriod, date);
     resetEntryForm();
     showSaveMessage(wasEditing ? 'Meal updated!' : 'Meal saved!', '#1A7A4E');
@@ -1025,6 +1045,10 @@ exportBtn.onclick = () => {
   link.click();
   link.remove();
   URL.revokeObjectURL(url);
+  trackAppEvent('logs_exported', {
+    meal_count: appState.meals.length,
+    library_count: appState.library.length,
+  });
   showDataStatus('Logs exported to a JSON file.', '#1A7A4E');
 };
 
@@ -1038,6 +1062,11 @@ importFileInput.addEventListener('change', async event => {
     const nextState = normalizePortableState(payload);
     await replaceRemoteStateSnapshot(nextState);
     applyImportedState(nextState);
+    trackAppEvent('logs_imported', {
+      meal_count: nextState.meals.length,
+      library_count: nextState.library.length,
+      sync_enabled: hasRemoteSync() ? 1 : 0,
+    });
     showDataStatus('Logs imported. Current data was replaced.', '#1A7A4E');
   } catch (error) {
     const message = error instanceof SyntaxError ? 'Could not read that JSON file.' : (error.message || 'Import failed.');
@@ -1134,6 +1163,7 @@ function renderLibrary() {
         await deleteLibraryItemRemote(p.name);
         appState.library = appState.library.filter(x => x.name !== p.name);
         persist();
+        trackAppEvent('library_item_removed', { category: p.cat });
         renderAll();
         showDataStatus('Plant removed.', '#1A7A4E');
       } catch (error) {
@@ -1155,6 +1185,7 @@ document.getElementById('lib-add-btn').onclick = async () => {
     await saveLibraryItemRemote(libraryItem);
     appState.library.push(libraryItem);
     persist();
+    trackAppEvent('library_item_added', { category: libraryItem.cat });
     inp.value = '';
     renderAll();
   } catch (error) {
@@ -1166,6 +1197,7 @@ document.getElementById('lib-input').addEventListener('keydown', e => { if (e.ke
 // ── Navigation ────────────────────────────────────────────────────────
 const PAGE_TITLES = { log: 'Log meal', history: 'History', library: 'Plant library' };
 function setActivePage(page) {
+  const previousPage = document.querySelector('.nav-item.active')?.dataset.page || 'log';
   document.querySelectorAll('.nav-item').forEach(item => item.classList.toggle('active', item.dataset.page === page));
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.getElementById('page-' + page).classList.add('active');
@@ -1174,6 +1206,7 @@ function setActivePage(page) {
   if (!desktopLayoutQuery.matches) closeMobileDrawer({ restoreFocus: false });
   if (page === 'history') renderHistory();
   if (page === 'library') renderLibrary();
+  if (page !== previousPage) trackAppScreenView(page);
 }
 
 document.querySelectorAll('.nav-item').forEach(item => {

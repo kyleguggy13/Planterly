@@ -2,7 +2,6 @@
 
 // Import the functions you need from the SDKs you need
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
-// import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-analytics.js";
 // TODO: Add SDKs for Firebase products that you want to use
 // https://firebase.google.com/docs/web/setup#available-libraries
 
@@ -39,11 +38,40 @@ const firebaseConfig = {
 
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
-// const analytics = getAnalytics(app);
+let analytics = null;
+let analyticsLogEvent = null;
+let analyticsReady = null;
 
 // Initialize services
 export const auth = getAuth(app);
 export const db = getFirestore(app);
+
+function getAnalyticsReady() {
+  if (!analyticsReady) {
+    analyticsReady = import("https://www.gstatic.com/firebasejs/10.12.5/firebase-analytics.js")
+      .then(async ({ getAnalytics, isSupported, logEvent }) => {
+        if (!(await isSupported())) return null;
+        analytics = getAnalytics(app);
+        analyticsLogEvent = logEvent;
+        return analytics;
+      })
+      .catch(() => null);
+  }
+
+  return analyticsReady;
+}
+
+export async function trackAnalyticsEvent(eventName, eventParams = {}) {
+  try {
+    const activeAnalytics = analytics || await getAnalyticsReady();
+    if (!activeAnalytics || typeof analyticsLogEvent !== "function") return;
+    analyticsLogEvent(activeAnalytics, eventName, eventParams);
+  } catch (_) {
+    analytics = null;
+    analyticsLogEvent = null;
+    analyticsReady = Promise.resolve(null);
+  }
+}
 
 // Google sign-in provider
 const googleProvider = new GoogleAuthProvider();

@@ -7,7 +7,8 @@ import {
   deleteMeal,
   deletePlant,
   loadUserData,
-  getPlantDocId
+  getPlantDocId,
+  trackAnalyticsEvent
 } from "./firebase.js";
 
 const loginBtn = document.getElementById("loginBtn");
@@ -17,6 +18,12 @@ const userStatus = document.getElementById("userStatus");
 let currentUser = null;
 let authSyncInFlight = false;
 let authSyncToken = 0;
+
+const SCREEN_TITLES = {
+  log: "Log meal",
+  history: "History",
+  library: "Plant library"
+};
 
 function getAppBridge() {
   return window.planterlyApp || null;
@@ -35,6 +42,22 @@ function setAuthControls(user) {
 
   loginBtn.style.display = "inline-block";
   logoutBtn.style.display = "none";
+}
+
+function getActivePageName() {
+  return document.querySelector(".nav-item.active")?.dataset.page || "log";
+}
+
+function trackEvent(eventName, eventParams = {}) {
+  void trackAnalyticsEvent(eventName, eventParams);
+}
+
+function trackScreenView(page = getActivePageName()) {
+  trackEvent("screen_view", {
+    firebase_screen: page,
+    firebase_screen_class: "Planterly",
+    page_title: SCREEN_TITLES[page] || page
+  });
 }
 
 function getStateSnapshot() {
@@ -120,10 +143,19 @@ function updateSyncBridge() {
 
 updateSyncBridge();
 
+window.planterlyAnalytics = {
+  trackEvent,
+  trackScreenView
+};
+
+trackScreenView();
+
 loginBtn.addEventListener("click", async () => {
   try {
     await signInWithGoogle();
+    trackEvent("login", { method: "Google" });
   } catch (error) {
+    trackEvent("login_failed", { method: "Google" });
     console.error("Login error:", error);
     setUserStatus(`Login failed: ${error.message}`);
   }
@@ -132,7 +164,9 @@ loginBtn.addEventListener("click", async () => {
 logoutBtn.addEventListener("click", async () => {
   try {
     await logOut();
+    trackEvent("sign_out", { method: "Google" });
   } catch (error) {
+    trackEvent("sign_out_failed", { method: "Google" });
     console.error("Logout error:", error);
     setUserStatus(`Logout failed: ${error.message}`);
   }
