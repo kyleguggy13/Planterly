@@ -1,16 +1,27 @@
 let periodChartInstance = null;
 
+function getEarliestLoggedMealYear() {
+  return appState.meals.reduce((earliestYear, meal) => {
+    if (!isISODate(meal.date)) return earliestYear;
+    const year = Number(meal.date.slice(0, 4));
+    if (!Number.isFinite(year)) return earliestYear;
+    return earliestYear === null || year < earliestYear ? year : earliestYear;
+  }, null);
+}
+
 function getChartPeriodKeys(period = currentPeriod) {
   const loggedKeys = new Set();
   appState.meals.forEach(meal => {
     if (isISODate(meal.date)) loggedKeys.add(getPeriodKey(period, meal.date));
   });
 
-  const bounds = [...loggedKeys, currentPeriodKey].sort();
-  if (!bounds.length) return [currentPeriodKey];
+  const earliestYear = getEarliestLoggedMealYear();
+  if (earliestYear === null || !loggedKeys.size) return [currentPeriodKey];
 
+  const startKey = getPeriodKey(period, `${earliestYear}-01-01`);
+  const bounds = [...loggedKeys, currentPeriodKey].sort();
   const keys = [];
-  let key = bounds[0];
+  let key = startKey;
   const endKey = bounds[bounds.length - 1];
   let guard = 0;
 
