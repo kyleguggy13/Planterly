@@ -1004,6 +1004,20 @@ function startEditingEntry(entry) {
   showSaveMessage('Editing meal entry.', 'var(--text-2)', 0);
 }
 
+function startPrefillingEntry(entry) {
+  editingMealId = null;
+  dateInput.value = todayISO;
+  mealInput.value = entry.meal;
+  selectedPlants = [...entry.plants];
+  plantInput.value = '';
+  formTitle.textContent = 'Add meal entry';
+  submitBtn.textContent = 'Save meal entry';
+  cancelEditBtn.style.display = 'none';
+  hideAC();
+  renderChips();
+  showSaveMessage('Copied meal into a new entry.', 'var(--text-2)', 0);
+}
+
 dateInput.value = todayISO;
 submitBtn.onclick = async () => {
   const date = dateInput.value;
@@ -1108,11 +1122,17 @@ function renderHistory() {
       <td data-label="Plants"><div class="log-plants-cell">${plantsHtml}</div></td>
       <td data-label="Actions">
         <div class="log-actions">
+          <button class="btn btn-secondary" type="button" data-action="copy">Copy</button>
           <button class="btn btn-secondary" type="button" data-action="edit">Edit</button>
           <button class="btn btn-danger" type="button" data-action="remove">Remove</button>
         </div>
       </td>
     `;
+    tr.querySelector('[data-action="copy"]').onclick = () => {
+      startPrefillingEntry(entry);
+      setActivePage('log');
+      window.scrollTo(0, 0);
+    };
     tr.querySelector('[data-action="edit"]').onclick = () => {
       startEditingEntry(entry);
       setActivePage('log');
