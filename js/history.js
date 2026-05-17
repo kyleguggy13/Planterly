@@ -59,15 +59,29 @@ function getPluralPeriodLabel(period) {
 }
 
 function getChartBarWidth(period) {
+  if (period === 'day') return 36;
   if (period === 'month') return 76;
   if (period === 'year') return 96;
   return 68;
 }
 
-function scrollSelectedChartBarIntoView(chartShell, selectedIndex, barWidth) {
+function getChartMaxBarThickness(period) {
+  return period === 'day' ? 22 : 44;
+}
+
+function getChartBarRadius(period) {
+  return period === 'day' ? 4 : 6;
+}
+
+function getChartDevicePixelRatio(chartWidth) {
+  return chartWidth > 4096 ? 1 : window.devicePixelRatio || 1;
+}
+
+function scrollSelectedChartBarIntoView(chartShell, chart, selectedIndex, barWidth) {
   if (selectedIndex < 0) return;
   window.requestAnimationFrame(() => {
-    const selectedCenter = selectedIndex * barWidth + (barWidth / 2);
+    const selectedBar = chart?.getDatasetMeta?.(0)?.data?.[selectedIndex];
+    const selectedCenter = Number.isFinite(selectedBar?.x) ? selectedBar.x : selectedIndex * barWidth + (barWidth / 2);
     const nextLeft = Math.max(0, selectedCenter - (chartShell.clientWidth / 2));
     chartShell.scrollTo({ left: nextLeft, behavior: 'smooth' });
   });
@@ -132,9 +146,9 @@ function renderPeriodChart() {
       backgroundColor: backgroundColors,
       borderColor: borderColors,
       borderWidth: 1,
-      borderRadius: 6,
+      borderRadius: getChartBarRadius(currentPeriod),
       minBarLength: 3,
-      maxBarThickness: 44,
+      maxBarThickness: getChartMaxBarThickness(currentPeriod),
     }],
   };
 
@@ -145,6 +159,7 @@ function renderPeriodChart() {
       options: {
         maintainAspectRatio: false,
         responsive: true,
+        devicePixelRatio: getChartDevicePixelRatio(nextWidth),
         animation: { duration: 220 },
         onClick(event, elements, chart) {
           if (!elements.length) return;
@@ -172,6 +187,11 @@ function renderPeriodChart() {
           x: {
             grid: { display: false },
             ticks: {
+              autoSkip: currentPeriod !== 'day',
+              callback(value, index) {
+                if (currentPeriod === 'day' && index % 2 === 1) return '';
+                return this.getLabelForValue(value);
+              },
               color: '#6D6A62',
               font: { size: 12, weight: '700' },
               maxRotation: 0,
@@ -191,13 +211,15 @@ function renderPeriodChart() {
         },
       },
     });
-    scrollSelectedChartBarIntoView(chartShell, selectedIndex, barWidth);
+    scrollSelectedChartBarIntoView(chartShell, periodChartInstance, selectedIndex, barWidth);
     return;
   }
 
   periodChartInstance.data = chartData;
+  periodChartInstance.options.devicePixelRatio = getChartDevicePixelRatio(nextWidth);
+  periodChartInstance.options.scales.x.ticks.autoSkip = currentPeriod !== 'day';
   periodChartInstance.options.scales.y.suggestedMax = Math.max(5, maxCount);
   periodChartInstance.resize();
   periodChartInstance.update();
-  scrollSelectedChartBarIntoView(chartShell, selectedIndex, barWidth);
+  scrollSelectedChartBarIntoView(chartShell, periodChartInstance, selectedIndex, barWidth);
 }
