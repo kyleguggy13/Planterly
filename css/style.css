@@ -401,7 +401,7 @@
   .content {
     width: min(100%, 1180px);
     margin: 0 auto;
-    padding: 18px 16px 32px;
+    padding: 18px 0 32px;
     display: grid;
     gap: 16px;
   }
@@ -656,7 +656,7 @@
   .card {
     background: rgba(255, 255, 255, 0.92);
     border: 1px solid var(--border);
-    border-radius: var(--radius-lg);
+    border-radius: 0;
     /* box-shadow: var(--shadow-sm); */
     overflow: hidden;
   }
@@ -696,6 +696,12 @@
   .lib-add-row {
     display: grid;
     gap: 12px;
+  }
+
+  .lib-add-row {
+    margin-bottom: 18px;
+    padding-bottom: 18px;
+    border-bottom: 1px solid var(--border);
   }
 
   .field {
@@ -1147,6 +1153,42 @@
     flex: 1 1 120px;
   }
 
+  @media (max-width: 1023px) {
+    .lib-row {
+      grid-template-columns: minmax(0, 1fr) auto auto auto;
+      align-items: center;
+      gap: 8px;
+      padding: 12px;
+    }
+
+    .lib-row td {
+      min-width: 0;
+      display: flex;
+      align-items: center;
+    }
+
+    .lib-row td::before {
+      content: none;
+      display: none;
+    }
+
+    .lib-count-cell {
+      justify-content: center;
+      white-space: nowrap;
+    }
+
+    .lib-row .lib-actions {
+      flex-wrap: nowrap;
+      justify-content: flex-end;
+    }
+
+    .lib-row .lib-actions .btn {
+      flex: 0 0 auto;
+      min-height: 34px;
+      padding: 0 10px;
+    }
+  }
+
   .lib-name {
     font-weight: 600;
     color: var(--text);
@@ -1385,6 +1427,10 @@
 
     .page-stack {
       gap: 20px;
+    }
+
+    .card {
+      border-radius: var(--radius-xl);
     }
 
     .card-header {
