@@ -45,11 +45,28 @@ function getUniquePlantCountForPeriod(period, key) {
   return plants.size;
 }
 
+function getSundayWeekNumber(weekStartDate) {
+  const weekEndDate = new Date(weekStartDate);
+  weekEndDate.setDate(weekEndDate.getDate() + 6);
+
+  let weekYear = weekStartDate.getFullYear();
+  const nextYearStart = new Date(weekYear + 1, 0, 1);
+  if (weekStartDate <= nextYearStart && nextYearStart <= weekEndDate) weekYear += 1;
+
+  const firstWeekStart = new Date(weekYear, 0, 1);
+  firstWeekStart.setDate(firstWeekStart.getDate() - firstWeekStart.getDay());
+
+  const weekStartUtc = Date.UTC(weekStartDate.getFullYear(), weekStartDate.getMonth(), weekStartDate.getDate());
+  const firstWeekStartUtc = Date.UTC(firstWeekStart.getFullYear(), firstWeekStart.getMonth(), firstWeekStart.getDate());
+  return Math.floor((weekStartUtc - firstWeekStartUtc) / (7 * 24 * 60 * 60 * 1000)) + 1;
+}
+
 function formatChartPeriodLabel(period, key) {
   const { start } = getPeriodRange(period, key);
   const startDate = parseISODateLocal(start);
   if (!startDate) return key;
-  if (period === 'day' || period === 'week') return startDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  if (period === 'day') return startDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  if (period === 'week') return 'W' + getSundayWeekNumber(startDate);
   if (period === 'month') return startDate.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
   return key;
 }
