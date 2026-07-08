@@ -20,6 +20,7 @@ import {
   setDoc,
   deleteDoc,
   getDocs,
+  getDoc,
   serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 
@@ -97,6 +98,43 @@ export function getPlantDocId(name) {
     .toLowerCase()
     .replace(/[\/\\]+/g, "-")
     .replace(/\s+/g, "-");
+}
+
+const PLANT_REMINDER_DOC_ID = "plantReminder";
+
+export async function saveNotificationPreference(uid, preferenceData) {
+  const preferenceRef = doc(db, "users", uid, "notificationPreferences", PLANT_REMINDER_DOC_ID);
+
+  await setDoc(preferenceRef, {
+    ...preferenceData,
+    updatedAt: serverTimestamp()
+  }, { merge: true });
+}
+
+export async function loadNotificationPreference(uid) {
+  const preferenceRef = doc(db, "users", uid, "notificationPreferences", PLANT_REMINDER_DOC_ID);
+  const snapshot = await getDoc(preferenceRef);
+  return snapshot.exists() ? snapshot.data() : null;
+}
+
+export async function savePushSubscription(uid, subscriptionId, subscriptionData) {
+  const subscriptionRef = doc(db, "users", uid, "pushSubscriptions", subscriptionId);
+
+  await setDoc(subscriptionRef, {
+    ...subscriptionData,
+    enabled: true,
+    updatedAt: serverTimestamp(),
+    createdAt: subscriptionData.createdAt || serverTimestamp()
+  }, { merge: true });
+}
+
+export async function disablePushSubscription(uid, subscriptionId) {
+  const subscriptionRef = doc(db, "users", uid, "pushSubscriptions", subscriptionId);
+
+  await setDoc(subscriptionRef, {
+    enabled: false,
+    updatedAt: serverTimestamp()
+  }, { merge: true });
 }
 
 // Save one meal

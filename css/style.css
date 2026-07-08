@@ -519,13 +519,16 @@
 
   .account-controls,
   .sidebar-data,
-  .sidebar-data-actions {
+  .sidebar-data-actions,
+  .notification-controls,
+  .notification-actions {
     display: grid;
     gap: 10px;
   }
 
   .account-controls .btn,
-  .sidebar-data-actions .btn {
+  .sidebar-data-actions .btn,
+  .notification-actions .btn {
     width: 100%;
   }
 
@@ -550,7 +553,8 @@
     color: rgba(255, 255, 255, 0.72);
   }
 
-  .data-status {
+  .data-status,
+  .notification-status {
     display: block;
     min-height: 18px;
     font-size: 12px;
@@ -1356,7 +1360,7 @@
     }
 
     .sidebar-utility-panel.is-open {
-      max-height: 420px;
+      max-height: 560px;
       opacity: 1;
       transform: translateY(0);
       pointer-events: auto;

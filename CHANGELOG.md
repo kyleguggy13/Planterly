@@ -4,6 +4,13 @@ All notable Planterly changes are documented here.
 
 Planterly uses semantic versioning: `MAJOR.MINOR.PATCH`. Major and minor version updates require explicit user consent before they are created. Patch entries may document fixes, documentation updates, and compatibility refinements that do not broaden the app's feature scope.
 
+## Unreleased
+
+### Minor
+
+- Added PWA manifest, service worker, and Firebase Functions scaffolding for opt-in 9:00 PM plant log push reminders.
+- Added a signed-in reminder control in the menu with iPhone Home Screen support messaging.
+
 ## v0.2.0 - 2026-04-24
 
 ### Major

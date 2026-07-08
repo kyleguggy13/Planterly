@@ -14,6 +14,7 @@ Live app: [Planterly](https://kyleguggy13.github.io/Planterly/)
 - Autosave data in the browser.
 - Export and import logs as JSON files.
 - Sign in with Google to sync meals and library data with Firebase.
+- Enable 9:00 PM push reminders for signed-in users on supported browsers and iPhone Home Screen web apps.
 
 ## Usage
 
@@ -21,7 +22,7 @@ Live app: [Planterly](https://kyleguggy13.github.io/Planterly/)
 2. Add plants from the quick-add library or type a new plant name.
 3. Use **History** to switch between day, week, month, and year views.
 4. Use **Plant library** to add or remove saved plant options.
-5. Use the menu to export/import logs or sign in for Firebase sync.
+5. Use the menu to export/import logs, sign in for Firebase sync, or enable reminders.
 
 Weekly progress is calculated from meal dates using Sunday-Saturday weeks. Day, month, and year views show neutral period metrics without scaling the weekly 30-plant goal.
 
@@ -30,6 +31,8 @@ Weekly progress is calculated from meal dates using Sunday-Saturday weeks. Day, 
 Planterly is a static frontend served from this repository and GitHub Pages. The main app lives in `index.html`, styling lives in `css/style.css`, and Firebase sync helpers live in `app.js` and `firebase.js`.
 
 To run locally, serve the repository with any static file server so browser module imports work correctly.
+
+Push reminders use a root service worker, `manifest.json`, and Firebase Cloud Functions in `functions/`. iPhone push notifications require iOS/iPadOS 16.4+ and the app installed to the Home Screen. Configure Web Push VAPID keys before enabling the reminder UI in production; see `functions/README.md`.
 
 ## Changelog
 
