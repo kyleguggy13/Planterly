@@ -376,6 +376,36 @@
   </div><!-- /main -->
 </div><!-- /app-shell -->
 
+<dialog class="category-dialog" id="history-category-dialog" aria-labelledby="history-category-title">
+  <form class="category-dialog-panel" id="history-category-form" method="dialog">
+    <div class="category-dialog-header">
+      <span class="category-dialog-title" id="history-category-title">Add plant to library</span>
+      <button class="category-dialog-close" id="history-category-cancel" type="button" aria-label="Cancel">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true">
+          <path d="M4 4l8 8M12 4 4 12" stroke-linecap="round"/>
+        </svg>
+      </button>
+    </div>
+    <p class="category-dialog-copy" id="history-category-copy"></p>
+    <div class="field">
+      <label for="history-category-select">Category</label>
+      <select id="history-category-select">
+        <option value="vegetable">Vegetable</option>
+        <option value="fruit">Fruit</option>
+        <option value="grain">Grain</option>
+        <option value="legume">Legume</option>
+        <option value="herb">Herb / Spice</option>
+        <option value="nut">Nut / Seed</option>
+        <option value="other">Other</option>
+      </select>
+    </div>
+    <div class="category-dialog-actions">
+      <button class="btn btn-ghost" id="history-category-cancel-action" type="button">Cancel</button>
+      <button class="btn btn-primary" type="submit">Add to Library</button>
+    </div>
+  </form>
+</dialog>
+
 
 <script>
 
@@ -501,11 +531,19 @@ const mobileUtilityHost = document.getElementById('mobile-utility-host');
 const desktopUtilityHost = document.getElementById('desktop-utility-host');
 const heroPanel = document.getElementById('hero-panel');
 const heroCloseBtn = document.getElementById('hero-close-btn');
+const historyCategoryDialog = document.getElementById('history-category-dialog');
+const historyCategoryForm = document.getElementById('history-category-form');
+const historyCategoryTitle = document.getElementById('history-category-title');
+const historyCategoryCopy = document.getElementById('history-category-copy');
+const historyCategorySelect = document.getElementById('history-category-select');
+const historyCategoryCancelBtn = document.getElementById('history-category-cancel');
+const historyCategoryCancelAction = document.getElementById('history-category-cancel-action');
 const desktopLayoutQuery = window.matchMedia('(min-width: 1024px)');
 
 let mobileDrawerOpen = false;
 let desktopUtilityOpen = false;
 let lastDrawerFocus = null;
+let historyCategoryResolve = null;
 
 function getFocusableElements(container) {
   return [...container.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])')]
@@ -783,6 +821,60 @@ const formWeek = () => dateInput.value ? getWeekStart(dateInput.value) : getWeek
 const formWeekMeals = () => appState.meals.filter(m => getMealWeek(m) === formWeek() && m.id !== editingMealId);
 const uniquePlants = () => { const s = new Set(); periodMeals().forEach(m => m.plants.forEach(p => s.add(p))); return s; };
 const plantFreq = () => { const f = {}; periodMeals().forEach(m => m.plants.forEach(p => { f[p] = (f[p]||0)+1; })); return f; };
+const normalizePlantName = name => String(name || '').trim().toLowerCase();
+const isPlantInLibrary = name => appState.library.some(p => normalizePlantName(p.name) === normalizePlantName(name));
+
+async function addPlantToLibrary(name, cat = 'other', source = 'library') {
+  const plantName = toTitle(String(name || ''));
+  if (!plantName || isPlantInLibrary(plantName)) return null;
+
+  const libraryItem = { name: plantName, cat: CAT[cat] ? cat : 'other' };
+  await saveLibraryItemRemote(libraryItem);
+  appState.library.push(libraryItem);
+  persist();
+  trackAppEvent('library_item_added', { category: libraryItem.cat, source });
+  return libraryItem;
+}
+
+function askForHistoryPlantCategory(plantName) {
+  if (!historyCategoryDialog?.showModal) {
+    const labels = Object.entries(CAT).map(([key, value]) => key + ' = ' + value.label).join(', ');
+    const response = window.prompt('Choose a category for "' + plantName + '": ' + labels, 'other');
+    const normalized = String(response || '').trim().toLowerCase();
+    return Promise.resolve(CAT[normalized] ? normalized : '');
+  }
+
+  return new Promise(resolve => {
+    historyCategoryResolve = resolve;
+    historyCategoryTitle.textContent = 'Add ' + plantName;
+    historyCategoryCopy.textContent = 'Choose a category before adding this plant to your library.';
+    historyCategorySelect.value = 'other';
+    historyCategoryDialog.returnValue = '';
+    historyCategoryDialog.showModal();
+    window.requestAnimationFrame(() => historyCategorySelect.focus());
+  });
+}
+
+function closeHistoryCategoryDialog(value = '') {
+  if (!historyCategoryDialog?.open) return;
+  historyCategoryDialog.close(value);
+}
+
+historyCategoryForm.addEventListener('submit', event => {
+  event.preventDefault();
+  closeHistoryCategoryDialog(historyCategorySelect.value);
+});
+historyCategoryCancelBtn.addEventListener('click', () => closeHistoryCategoryDialog(''));
+historyCategoryCancelAction.addEventListener('click', () => closeHistoryCategoryDialog(''));
+historyCategoryDialog.addEventListener('cancel', () => {
+  historyCategoryDialog.returnValue = '';
+});
+historyCategoryDialog.addEventListener('close', () => {
+  if (!historyCategoryResolve) return;
+  const category = CAT[historyCategoryDialog.returnValue] ? historyCategoryDialog.returnValue : '';
+  historyCategoryResolve(category);
+  historyCategoryResolve = null;
+});
 
 // ── Metrics ───────────────────────────────────────────────────────────
 function renderMetrics() {
@@ -1120,7 +1212,29 @@ function renderHistory() {
   if (!u.size) {
     pillsEl.innerHTML = '<span style="font-size:13px;color:var(--text-3);font-style:italic">No plants logged yet ' + periodCopy.thisLabel + '</span>';
   } else {
-    [...u].sort().forEach(p => { const s = document.createElement('span'); s.className = 'u-pill'; s.textContent = p; pillsEl.appendChild(s); });
+    [...u].sort().forEach(p => {
+      const inLibrary = isPlantInLibrary(p);
+      const pill = document.createElement(inLibrary ? 'span' : 'button');
+      pill.className = 'u-pill' + (inLibrary ? '' : ' u-pill-missing');
+      pill.textContent = p;
+      if (!inLibrary) {
+        pill.type = 'button';
+        pill.title = 'Add ' + p + ' to the plant library';
+        pill.setAttribute('aria-label', 'Add ' + p + ' to the plant library');
+        pill.onclick = async () => {
+          const category = await askForHistoryPlantCategory(p);
+          if (!category) return;
+          try {
+            await addPlantToLibrary(p, category, 'history_unique');
+            renderAll();
+            showDataStatus(p + ' added to the library.', '#1A7A4E');
+          } catch (error) {
+            showDataStatus(error.message || 'Plant save failed.', '#C0392B', 4500);
+          }
+        };
+      }
+      pillsEl.appendChild(pill);
+    });
   }
 
   const tbody = document.getElementById('log-tbody');
@@ -1216,13 +1330,9 @@ document.getElementById('lib-add-btn').onclick = async () => {
   const name = toTitle(inp.value);
   const cat = document.getElementById('lib-cat').value;
   if (!name) return;
-  if (appState.library.find(p => p.name.toLowerCase() === name.toLowerCase())) { inp.value = ''; return; }
-  const libraryItem = { name, cat };
+  if (isPlantInLibrary(name)) { inp.value = ''; return; }
   try {
-    await saveLibraryItemRemote(libraryItem);
-    appState.library.push(libraryItem);
-    persist();
-    trackAppEvent('library_item_added', { category: libraryItem.cat });
+    await addPlantToLibrary(name, cat, 'library');
     inp.value = '';
     renderAll();
   } catch (error) {
