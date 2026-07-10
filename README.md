@@ -15,6 +15,7 @@ Live app: [Planterly](https://kyleguggy13.github.io/Planterly/)
 - Export and import logs as JSON files.
 - Sign in with Google to sync meals and library data with Firebase.
 - Enable 9:00 PM push reminders for signed-in users on supported browsers and iPhone Home Screen web apps.
+- Send an on-demand test notification to the current device from the reminder controls.
 
 ## Usage
 
@@ -23,6 +24,7 @@ Live app: [Planterly](https://kyleguggy13.github.io/Planterly/)
 3. Use **History** to switch between day, week, month, and year views.
 4. Use **Plant library** to add or remove saved plant options.
 5. Use the menu to export/import logs, sign in for Firebase sync, or enable reminders.
+6. After enabling reminders, choose **Send Test Notification**, then press Home or lock the device; the test push arrives after about eight seconds.
 
 Weekly progress is calculated from meal dates using Sunday-Saturday weeks. Day, month, and year views show neutral period metrics without scaling the weekly 30-plant goal.
 

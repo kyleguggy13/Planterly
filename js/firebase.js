@@ -24,6 +24,11 @@ import {
   serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 
+import {
+  getFunctions,
+  httpsCallable
+} from "https://www.gstatic.com/firebasejs/10.12.5/firebase-functions.js";
+
 
 // Your web app's Firebase configuration
 // For Firebase JS SDK v7.20.0 and later, measurementId is optional
@@ -46,6 +51,8 @@ let analyticsReady = null;
 // Initialize services
 export const auth = getAuth(app);
 export const db = getFirestore(app);
+const functions = getFunctions(app);
+const sendTestNotificationCallable = httpsCallable(functions, "sendTestNotification");
 
 function getAnalyticsReady() {
   if (!analyticsReady) {
@@ -128,6 +135,12 @@ export async function savePushSubscription(uid, subscriptionId, subscriptionData
   }, { merge: true });
 }
 
+export async function loadPushSubscription(uid, subscriptionId) {
+  const subscriptionRef = doc(db, "users", uid, "pushSubscriptions", subscriptionId);
+  const snapshot = await getDoc(subscriptionRef);
+  return snapshot.exists() ? snapshot.data() : null;
+}
+
 export async function disablePushSubscription(uid, subscriptionId) {
   const subscriptionRef = doc(db, "users", uid, "pushSubscriptions", subscriptionId);
 
@@ -135,6 +148,11 @@ export async function disablePushSubscription(uid, subscriptionId) {
     enabled: false,
     updatedAt: serverTimestamp()
   }, { merge: true });
+}
+
+export async function requestTestNotification(subscriptionId) {
+  const result = await sendTestNotificationCallable({ subscriptionId });
+  return result.data;
 }
 
 // Save one meal

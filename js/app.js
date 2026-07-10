@@ -11,7 +11,9 @@ import {
   saveNotificationPreference,
   loadNotificationPreference,
   savePushSubscription,
+  loadPushSubscription,
   disablePushSubscription,
+  requestTestNotification,
   trackAnalyticsEvent
 } from "./firebase.js";
 
@@ -20,6 +22,7 @@ const logoutBtn = document.getElementById("logoutBtn");
 const userStatus = document.getElementById("userStatus");
 const enableNotificationsBtn = document.getElementById("enable-notifications-btn");
 const disableNotificationsBtn = document.getElementById("disable-notifications-btn");
+const testNotificationBtn = document.getElementById("test-notification-btn");
 const notificationStatus = document.getElementById("notification-status");
 
 let currentUser = null;
@@ -28,6 +31,10 @@ let authSyncToken = 0;
 let notificationPreference = null;
 let notificationStatusOverride = "";
 let serviceWorkerRegistrationPromise = null;
+let notificationChangeInFlight = false;
+let testNotificationInFlight = false;
+let pendingTestNotification = null;
+let pendingTestCheckTimer = null;
 
 const REMINDER_HOUR = 21;
 const REMINDER_MINUTE = 0;
@@ -118,35 +125,50 @@ function setNotificationStatus(text) {
 }
 
 function renderNotificationControls(message = "") {
-  if (!enableNotificationsBtn || !disableNotificationsBtn || !notificationStatus) return;
+  if (!enableNotificationsBtn || !disableNotificationsBtn || !testNotificationBtn || !notificationStatus) return;
 
   const capability = getNotificationCapability();
   const enabled = Boolean(notificationPreference?.enabled);
   enableNotificationsBtn.hidden = enabled;
+  enableNotificationsBtn.textContent = "Enable Reminders";
   disableNotificationsBtn.hidden = !enabled;
+  testNotificationBtn.hidden = !enabled;
   enableNotificationsBtn.disabled = true;
   disableNotificationsBtn.disabled = !currentUser;
+  testNotificationBtn.disabled = true;
 
   if (!currentUser) {
+    testNotificationBtn.hidden = true;
     notificationStatusOverride = "";
     setNotificationStatus("Sign in to enable reminders.");
     return;
   }
 
   if (!capability.ok) {
+    testNotificationBtn.hidden = true;
     notificationStatusOverride = "";
     setNotificationStatus(capability.message);
     return;
   }
 
   if (Notification.permission === "denied") {
+    testNotificationBtn.hidden = true;
     notificationStatusOverride = "";
     setNotificationStatus("Notification permission is blocked in this browser.");
     return;
   }
 
-  enableNotificationsBtn.disabled = false;
-  disableNotificationsBtn.disabled = false;
+  const deviceNeedsSetup = enabled && Notification.permission !== "granted";
+  enableNotificationsBtn.hidden = enabled && !deviceNeedsSetup;
+  enableNotificationsBtn.textContent = deviceNeedsSetup ? "Set Up This Device" : "Enable Reminders";
+  disableNotificationsBtn.hidden = !enabled;
+  testNotificationBtn.hidden = !enabled || deviceNeedsSetup;
+  const notificationOperationInFlight = notificationChangeInFlight ||
+    testNotificationInFlight || Boolean(pendingTestNotification);
+  enableNotificationsBtn.disabled = notificationOperationInFlight;
+  disableNotificationsBtn.disabled = notificationOperationInFlight;
+  testNotificationBtn.disabled = !enabled || Notification.permission !== "granted" ||
+    notificationOperationInFlight;
 
   if (message) {
     notificationStatusOverride = message;
@@ -156,6 +178,11 @@ function renderNotificationControls(message = "") {
 
   if (notificationStatusOverride) {
     setNotificationStatus(notificationStatusOverride);
+    return;
+  }
+
+  if (deviceNeedsSetup) {
+    setNotificationStatus("Reminders are on for your account. Set up notifications on this device.");
     return;
   }
 
@@ -191,12 +218,12 @@ function arrayBufferToBase64Url(buffer) {
 }
 
 async function getSubscriptionId(endpoint) {
-  if (window.crypto?.subtle && window.TextEncoder) {
-    const endpointHash = await window.crypto.subtle.digest("SHA-256", new TextEncoder().encode(endpoint));
-    return arrayBufferToBase64Url(endpointHash);
+  if (!window.crypto?.subtle || !window.TextEncoder) {
+    throw new Error("Secure push subscription IDs are not supported in this browser.");
   }
 
-  return window.btoa(endpoint).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, "").slice(0, 120);
+  const endpointHash = await window.crypto.subtle.digest("SHA-256", new TextEncoder().encode(endpoint));
+  return arrayBufferToBase64Url(endpointHash);
 }
 
 function registerPlanterlyServiceWorker() {
@@ -262,6 +289,8 @@ async function syncNotificationPreference() {
 }
 
 async function enablePlantReminders() {
+  if (notificationChangeInFlight || testNotificationInFlight || pendingTestNotification) return;
+
   if (!currentUser) {
     renderNotificationControls("Sign in to enable reminders.");
     return;
@@ -274,7 +303,7 @@ async function enablePlantReminders() {
   }
 
   try {
-    enableNotificationsBtn.disabled = true;
+    notificationChangeInFlight = true;
     renderNotificationControls("Requesting notification permission...");
 
     const permission = Notification.permission === "granted"
@@ -319,17 +348,22 @@ async function enablePlantReminders() {
   } catch (error) {
     console.error("Enable reminders error:", error);
     renderNotificationControls(error.message || "Could not enable reminders.");
+  } finally {
+    notificationChangeInFlight = false;
+    renderNotificationControls(notificationStatusOverride);
   }
 }
 
 async function disablePlantReminders() {
+  if (notificationChangeInFlight || testNotificationInFlight || pendingTestNotification) return;
+
   if (!currentUser) {
     renderNotificationControls("Sign in to change reminders.");
     return;
   }
 
   try {
-    disableNotificationsBtn.disabled = true;
+    notificationChangeInFlight = true;
     renderNotificationControls("Disabling reminders...");
 
     await saveNotificationPreference(currentUser.uid, {
@@ -360,6 +394,123 @@ async function disablePlantReminders() {
   } catch (error) {
     console.error("Disable reminders error:", error);
     renderNotificationControls(error.message || "Could not disable reminders.");
+  } finally {
+    notificationChangeInFlight = false;
+    renderNotificationControls(notificationStatusOverride);
+  }
+}
+
+function clearPendingTestNotification() {
+  if (pendingTestCheckTimer) window.clearTimeout(pendingTestCheckTimer);
+  pendingTestCheckTimer = null;
+  pendingTestNotification = null;
+}
+
+function schedulePendingTestCheck(delayMs = 12000) {
+  if (pendingTestCheckTimer) window.clearTimeout(pendingTestCheckTimer);
+  pendingTestCheckTimer = window.setTimeout(() => {
+    pendingTestCheckTimer = null;
+    void checkPendingTestNotification();
+  }, delayMs);
+}
+
+async function checkPendingTestNotification() {
+  const pending = pendingTestNotification;
+  if (!pending || !currentUser || currentUser.uid !== pending.uid || document.visibilityState === "hidden") return;
+
+  try {
+    const subscription = await loadPushSubscription(pending.uid, pending.subscriptionId);
+    if (pendingTestNotification !== pending) return;
+
+    if (subscription?.lastTestStatus === "sent") {
+      clearPendingTestNotification();
+      renderNotificationControls("The push service accepted the test. Check Notification Center if no banner appeared.");
+      return;
+    }
+
+    if (subscription?.lastTestStatus === "failed") {
+      clearPendingTestNotification();
+      renderNotificationControls("Test delivery failed. Disable and re-enable reminders, then try again.");
+      return;
+    }
+
+    if (subscription?.lastTestStatus === "queue-failed") {
+      clearPendingTestNotification();
+      renderNotificationControls("The test could not be queued. Try again or check the Firebase function logs.");
+      return;
+    }
+
+    pending.checksRemaining -= 1;
+    if (pending.checksRemaining > 0) {
+      schedulePendingTestCheck(3000);
+      return;
+    }
+
+    clearPendingTestNotification();
+    renderNotificationControls("No delivery result was recorded. Check the Firebase task-function logs and IAM settings.");
+  } catch (error) {
+    console.warn("Could not check test notification status:", error);
+    clearPendingTestNotification();
+    renderNotificationControls("Could not verify the delivery result. Check the notification and Firebase function logs.");
+  }
+}
+
+async function sendTestNotification() {
+  if (testNotificationInFlight || notificationChangeInFlight || pendingTestNotification) return;
+
+  if (!currentUser || !notificationPreference?.enabled) {
+    renderNotificationControls("Enable reminders before sending a test.");
+    return;
+  }
+  const testUser = currentUser;
+
+  const capability = getNotificationCapability();
+  if (!capability.ok) {
+    renderNotificationControls(capability.message);
+    return;
+  }
+
+  if (Notification.permission !== "granted") {
+    renderNotificationControls("Notification permission is not granted. Disable and re-enable reminders first.");
+    return;
+  }
+
+  try {
+    testNotificationInFlight = true;
+    renderNotificationControls("Preparing a test notification...");
+
+    const registration = await getReadyServiceWorkerRegistration();
+    let subscription = await registration.pushManager.getSubscription();
+
+    if (!subscription) {
+      subscription = await registration.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(PLANTERLY_VAPID_PUBLIC_KEY)
+      });
+    }
+
+    const subscriptionId = await getSubscriptionId(subscription.endpoint);
+    await savePushSubscription(testUser.uid, subscriptionId, getPushSubscriptionPayload(subscription));
+
+    renderNotificationControls("Queuing a test notification...");
+    trackEvent("plant_reminder_test_requested");
+    const result = await requestTestNotification(subscriptionId);
+    const delaySeconds = Number(result?.delaySeconds) || 8;
+    pendingTestNotification = {
+      uid: testUser.uid,
+      subscriptionId,
+      checksRemaining: 5
+    };
+    schedulePendingTestCheck((delaySeconds + 4) * 1000);
+    trackEvent("plant_reminder_test_queued");
+    renderNotificationControls(`Test queued. Press Home or lock your iPhone now; it should arrive in about ${delaySeconds} seconds.`);
+  } catch (error) {
+    trackEvent("plant_reminder_test_failed");
+    console.error("Test notification error:", error);
+    renderNotificationControls(error.message || "Could not send the test notification.");
+  } finally {
+    testNotificationInFlight = false;
+    renderNotificationControls(notificationStatusOverride);
   }
 }
 
@@ -465,6 +616,16 @@ disableNotificationsBtn?.addEventListener("click", () => {
   void disablePlantReminders();
 });
 
+testNotificationBtn?.addEventListener("click", () => {
+  void sendTestNotification();
+});
+
+document.addEventListener("visibilitychange", () => {
+  if (document.visibilityState === "visible" && pendingTestNotification) {
+    void checkPendingTestNotification();
+  }
+});
+
 loginBtn.addEventListener("click", async () => {
   try {
     await signInWithGoogle();
@@ -491,6 +652,9 @@ watchAuth(async user => {
   const syncToken = ++authSyncToken;
 
   currentUser = user;
+  if (!user || (pendingTestNotification && pendingTestNotification.uid !== user.uid)) {
+    clearPendingTestNotification();
+  }
   setAuthControls(user);
   updateSyncBridge();
   void syncNotificationPreference();

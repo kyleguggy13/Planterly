@@ -8,8 +8,8 @@
   },
   "main": "index.js",
   "scripts": {
-    "lint": "node --check index.js && node --check reminderLogic.js",
-    "test": "node test/reminderLogic.test.js"
+    "lint": "node --check index.js && node --check reminderLogic.js && node --check pushSecurity.js",
+    "test": "node test/reminderLogic.test.js && node test/pushSecurity.test.js"
   },
   "dependencies": {
     "firebase-admin": "^13.10.0",
