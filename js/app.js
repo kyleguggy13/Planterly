@@ -21,9 +21,9 @@ const loginBtn = document.getElementById("loginBtn");
 const logoutBtn = document.getElementById("logoutBtn");
 const userStatus = document.getElementById("userStatus");
 const enableNotificationsBtn = document.getElementById("enable-notifications-btn");
-const disableNotificationsBtn = document.getElementById("disable-notifications-btn");
 const testNotificationBtn = document.getElementById("test-notification-btn");
 const notificationStatus = document.getElementById("notification-status");
+const reminderToggleInputs = Array.from(document.querySelectorAll("[data-reminder-id]"));
 
 let currentUser = null;
 let authSyncInFlight = false;
@@ -31,14 +31,17 @@ let authSyncToken = 0;
 let notificationPreference = null;
 let notificationStatusOverride = "";
 let serviceWorkerRegistrationPromise = null;
+let currentDevicePushReady = false;
 let notificationChangeInFlight = false;
 let testNotificationInFlight = false;
 let pendingTestNotification = null;
 let pendingTestCheckTimer = null;
 
-const REMINDER_HOUR = 21;
-const REMINDER_MINUTE = 0;
-const REMINDER_TIME_LABEL = "9:00 PM";
+const MEAL_REMINDERS = Object.freeze([
+  Object.freeze({ id: "breakfast", label: "Breakfast", timeLabel: "10:00 AM" }),
+  Object.freeze({ id: "lunch", label: "Lunch", timeLabel: "1:00 PM" }),
+  Object.freeze({ id: "dinner", label: "Dinner", timeLabel: "9:00 PM" })
+]);
 const PLANTERLY_VAPID_PUBLIC_KEY = "BH4FNBbz4b1AvUCk0cc5DT9EE4bjMjDJWdiNOwUzcU5xrVZLKyF3hx7qz4O50wYF-u895wB34koKhQZZ1GNMJRE";
 // const VAPID_PUBLIC_KEY_CONFIGURED = Boolean(
 //   PLANTERLY_VAPID_PUBLIC_KEY &&
@@ -124,49 +127,86 @@ function setNotificationStatus(text) {
   if (notificationStatus) notificationStatus.textContent = text;
 }
 
+function getEmptyReminderSettings() {
+  return Object.fromEntries(MEAL_REMINDERS.map(reminder => [reminder.id, false]));
+}
+
+function normalizeNotificationPreference(preference) {
+  const hasReminderSettings = preference?.reminders && typeof preference.reminders === "object";
+  const reminders = getEmptyReminderSettings();
+
+  if (hasReminderSettings) {
+    MEAL_REMINDERS.forEach(reminder => {
+      reminders[reminder.id] = preference.reminders[reminder.id] === true;
+    });
+  } else if (preference?.enabled) {
+    // Preserve the legacy single 9:00 PM reminder as Dinner.
+    reminders.dinner = true;
+  }
+
+  return {
+    ...(preference || {}),
+    enabled: Object.values(reminders).some(Boolean),
+    timezone: preference?.timezone || getLocalTimeZone(),
+    reminders
+  };
+}
+
+function getEnabledMealReminders(preference = notificationPreference) {
+  const reminders = preference?.reminders || {};
+  return MEAL_REMINDERS.filter(reminder => reminders[reminder.id] === true);
+}
+
+function getReminderStatusSummary(preference = notificationPreference) {
+  return getEnabledMealReminders(preference)
+    .map(reminder => `${reminder.label} ${reminder.timeLabel}`)
+    .join(", ");
+}
+
 function renderNotificationControls(message = "") {
-  if (!enableNotificationsBtn || !disableNotificationsBtn || !testNotificationBtn || !notificationStatus) return;
+  if (!enableNotificationsBtn || !testNotificationBtn || !notificationStatus || reminderToggleInputs.length === 0) return;
 
   const capability = getNotificationCapability();
   const enabled = Boolean(notificationPreference?.enabled);
-  enableNotificationsBtn.hidden = enabled;
-  enableNotificationsBtn.textContent = "Enable Reminders";
-  disableNotificationsBtn.hidden = !enabled;
-  testNotificationBtn.hidden = !enabled;
+  const notificationOperationInFlight = notificationChangeInFlight ||
+    testNotificationInFlight || Boolean(pendingTestNotification);
+
+  reminderToggleInputs.forEach(input => {
+    input.checked = notificationPreference?.reminders?.[input.dataset.reminderId] === true;
+    input.disabled = !currentUser || notificationOperationInFlight;
+  });
+
+  enableNotificationsBtn.hidden = true;
   enableNotificationsBtn.disabled = true;
-  disableNotificationsBtn.disabled = !currentUser;
+  testNotificationBtn.hidden = true;
   testNotificationBtn.disabled = true;
 
   if (!currentUser) {
-    testNotificationBtn.hidden = true;
     notificationStatusOverride = "";
     setNotificationStatus("Sign in to enable reminders.");
     return;
   }
 
   if (!capability.ok) {
-    testNotificationBtn.hidden = true;
     notificationStatusOverride = "";
     setNotificationStatus(capability.message);
     return;
   }
 
   if (Notification.permission === "denied") {
-    testNotificationBtn.hidden = true;
     notificationStatusOverride = "";
-    setNotificationStatus("Notification permission is blocked in this browser.");
+    setNotificationStatus(enabled
+      ? "Notification permission is blocked. You can switch reminders off or allow Planterly in Settings."
+      : "Notification permission is blocked in this browser.");
     return;
   }
 
-  const deviceNeedsSetup = enabled && Notification.permission !== "granted";
-  enableNotificationsBtn.hidden = enabled && !deviceNeedsSetup;
-  enableNotificationsBtn.textContent = deviceNeedsSetup ? "Set Up This Device" : "Enable Reminders";
-  disableNotificationsBtn.hidden = !enabled;
-  testNotificationBtn.hidden = !enabled || deviceNeedsSetup;
-  const notificationOperationInFlight = notificationChangeInFlight ||
-    testNotificationInFlight || Boolean(pendingTestNotification);
+  const deviceNeedsSetup = enabled &&
+    (Notification.permission !== "granted" || !currentDevicePushReady);
+  enableNotificationsBtn.hidden = !deviceNeedsSetup;
+  enableNotificationsBtn.textContent = "Set Up This Device";
   enableNotificationsBtn.disabled = notificationOperationInFlight;
-  disableNotificationsBtn.disabled = notificationOperationInFlight;
+  testNotificationBtn.hidden = !enabled || deviceNeedsSetup;
   testNotificationBtn.disabled = !enabled || Notification.permission !== "granted" ||
     notificationOperationInFlight;
 
@@ -188,11 +228,11 @@ function renderNotificationControls(message = "") {
 
   if (enabled) {
     const timezone = notificationPreference.timezone || getLocalTimeZone();
-    setNotificationStatus(`On at ${REMINDER_TIME_LABEL} (${timezone}).`);
+    setNotificationStatus(`On: ${getReminderStatusSummary()} (${timezone}).`);
     return;
   }
 
-  setNotificationStatus(`Off. Enable a ${REMINDER_TIME_LABEL} reminder.`);
+  setNotificationStatus("All meal reminders are off.");
 }
 
 function urlBase64ToUint8Array(base64String) {
@@ -241,6 +281,17 @@ async function getReadyServiceWorkerRegistration() {
   return await navigator.serviceWorker.ready;
 }
 
+async function syncCurrentDevicePushState() {
+  const capability = getNotificationCapability();
+  if (!capability.ok || Notification.permission !== "granted") {
+    currentDevicePushReady = false;
+    return;
+  }
+
+  const registration = await getReadyServiceWorkerRegistration();
+  currentDevicePushReady = Boolean(await registration.pushManager.getSubscription());
+}
+
 function getPushSubscriptionPayload(subscription) {
   const subscriptionJson = subscription.toJSON();
   return {
@@ -255,18 +306,24 @@ function getPushSubscriptionPayload(subscription) {
   };
 }
 
-async function refreshEnabledReminderTimezone() {
-  if (!currentUser || !notificationPreference?.enabled) return;
-  const timezone = getLocalTimeZone();
-  if (notificationPreference.timezone === timezone) return;
-
-  await saveNotificationPreference(currentUser.uid, {
-    enabled: true,
+function getNotificationPreferencePayload(reminders, timezone = getLocalTimeZone()) {
+  return {
+    enabled: Object.values(reminders).some(Boolean),
     timezone,
-    hour: REMINDER_HOUR,
-    minute: REMINDER_MINUTE
-  });
-  notificationPreference = { ...notificationPreference, timezone };
+    reminders
+  };
+}
+
+async function refreshStoredReminderPreference(storedPreference) {
+  if (!currentUser || !storedPreference) return;
+  const timezone = getLocalTimeZone();
+  const needsMigration = !storedPreference?.reminders || typeof storedPreference.reminders !== "object";
+  const needsEnabledCorrection = storedPreference.enabled !== notificationPreference.enabled;
+  const needsTimezoneRefresh = notificationPreference.enabled && notificationPreference.timezone !== timezone;
+  if (!needsMigration && !needsEnabledCorrection && !needsTimezoneRefresh) return;
+
+  notificationPreference = getNotificationPreferencePayload(notificationPreference.reminders, timezone);
+  await saveNotificationPreference(currentUser.uid, notificationPreference);
 }
 
 async function syncNotificationPreference() {
@@ -274,13 +331,16 @@ async function syncNotificationPreference() {
 
   if (!currentUser) {
     notificationPreference = null;
+    currentDevicePushReady = false;
     renderNotificationControls();
     return;
   }
 
   try {
-    notificationPreference = await loadNotificationPreference(currentUser.uid);
-    await refreshEnabledReminderTimezone();
+    const storedPreference = await loadNotificationPreference(currentUser.uid);
+    notificationPreference = normalizeNotificationPreference(storedPreference);
+    await refreshStoredReminderPreference(storedPreference);
+    await syncCurrentDevicePushState();
     renderNotificationControls();
   } catch (error) {
     console.error("Notification preference error:", error);
@@ -288,11 +348,46 @@ async function syncNotificationPreference() {
   }
 }
 
-async function enablePlantReminders() {
-  if (notificationChangeInFlight || testNotificationInFlight || pendingTestNotification) return;
+async function ensureCurrentPushSubscription(user) {
+  const permission = Notification.permission === "granted"
+    ? "granted"
+    : await Notification.requestPermission();
 
-  if (!currentUser) {
-    renderNotificationControls("Sign in to enable reminders.");
+  if (permission !== "granted") {
+    throw new Error("Notification permission was not granted.");
+  }
+
+  const registration = await getReadyServiceWorkerRegistration();
+  let subscription = await registration.pushManager.getSubscription();
+  if (!subscription) {
+    subscription = await registration.pushManager.subscribe({
+      userVisibleOnly: true,
+      applicationServerKey: urlBase64ToUint8Array(PLANTERLY_VAPID_PUBLIC_KEY)
+    });
+  }
+
+  const subscriptionId = await getSubscriptionId(subscription.endpoint);
+  await savePushSubscription(user.uid, subscriptionId, getPushSubscriptionPayload(subscription));
+  currentDevicePushReady = true;
+  return { subscription, subscriptionId };
+}
+
+async function disableCurrentPushSubscription(user) {
+  currentDevicePushReady = false;
+  if (!("serviceWorker" in navigator) || !("PushManager" in window) || !window.isSecureContext) return;
+  const registration = await getReadyServiceWorkerRegistration();
+  const subscription = await registration.pushManager.getSubscription();
+  if (!subscription) return;
+
+  const subscriptionId = await getSubscriptionId(subscription.endpoint);
+  await disablePushSubscription(user.uid, subscriptionId);
+  await subscription.unsubscribe();
+}
+
+async function setupNotificationsForCurrentDevice() {
+  if (notificationChangeInFlight || testNotificationInFlight || pendingTestNotification) return;
+  if (!currentUser || !notificationPreference?.enabled) {
+    renderNotificationControls("Choose at least one meal reminder first.");
     return;
   }
 
@@ -302,98 +397,74 @@ async function enablePlantReminders() {
     return;
   }
 
+  const user = currentUser;
   try {
     notificationChangeInFlight = true;
-    renderNotificationControls("Requesting notification permission...");
+    notificationStatusOverride = "";
+    renderNotificationControls("Setting up notifications on this device...");
+    await ensureCurrentPushSubscription(user);
 
-    const permission = Notification.permission === "granted"
-      ? "granted"
-      : await Notification.requestPermission();
-
-    if (permission !== "granted") {
-      renderNotificationControls("Notification permission was not granted.");
-      return;
-    }
-
-    const registration = await getReadyServiceWorkerRegistration();
-    let subscription = await registration.pushManager.getSubscription();
-    if (!subscription) {
-      subscription = await registration.pushManager.subscribe({
-        userVisibleOnly: true,
-        applicationServerKey: urlBase64ToUint8Array(PLANTERLY_VAPID_PUBLIC_KEY)
-      });
-    }
-
-    const subscriptionId = await getSubscriptionId(subscription.endpoint);
-    const timezone = getLocalTimeZone();
-
-    await Promise.all([
-      saveNotificationPreference(currentUser.uid, {
-        enabled: true,
-        timezone,
-        hour: REMINDER_HOUR,
-        minute: REMINDER_MINUTE
-      }),
-      savePushSubscription(currentUser.uid, subscriptionId, getPushSubscriptionPayload(subscription))
-    ]);
-
-    notificationPreference = {
-      enabled: true,
-      timezone,
-      hour: REMINDER_HOUR,
-      minute: REMINDER_MINUTE
-    };
-    trackEvent("plant_reminder_enabled", { timezone });
-    renderNotificationControls(`On at ${REMINDER_TIME_LABEL} (${timezone}).`);
+    notificationPreference = getNotificationPreferencePayload(
+      notificationPreference.reminders,
+      getLocalTimeZone()
+    );
+    await saveNotificationPreference(user.uid, notificationPreference);
+    trackEvent("plant_reminder_device_setup");
+    renderNotificationControls("This device is ready for meal reminders.");
   } catch (error) {
-    console.error("Enable reminders error:", error);
-    renderNotificationControls(error.message || "Could not enable reminders.");
+    console.error("Set up reminders error:", error);
+    renderNotificationControls(error.message || "Could not set up reminders on this device.");
   } finally {
     notificationChangeInFlight = false;
     renderNotificationControls(notificationStatusOverride);
   }
 }
 
-async function disablePlantReminders() {
+async function updateMealReminder(reminderId, nextEnabled) {
   if (notificationChangeInFlight || testNotificationInFlight || pendingTestNotification) return;
-
   if (!currentUser) {
     renderNotificationControls("Sign in to change reminders.");
     return;
   }
 
+  const reminder = MEAL_REMINDERS.find(option => option.id === reminderId);
+  if (!reminder) return;
+
+  const capability = getNotificationCapability();
+  if (nextEnabled && !capability.ok) {
+    renderNotificationControls(capability.message);
+    renderNotificationControls(notificationStatusOverride);
+    return;
+  }
+
+  const user = currentUser;
+  const currentPreference = normalizeNotificationPreference(notificationPreference);
+  const nextReminders = {
+    ...currentPreference.reminders,
+    [reminderId]: nextEnabled
+  };
+  const nextPreference = getNotificationPreferencePayload(nextReminders, getLocalTimeZone());
+
   try {
     notificationChangeInFlight = true;
-    renderNotificationControls("Disabling reminders...");
+    notificationStatusOverride = "";
+    renderNotificationControls(`${nextEnabled ? "Enabling" : "Disabling"} ${reminder.label} reminders...`);
 
-    await saveNotificationPreference(currentUser.uid, {
-      enabled: false,
-      timezone: getLocalTimeZone(),
-      hour: REMINDER_HOUR,
-      minute: REMINDER_MINUTE
+    if (nextEnabled) await ensureCurrentPushSubscription(user);
+    await saveNotificationPreference(user.uid, nextPreference);
+    notificationPreference = nextPreference;
+
+    if (!nextPreference.enabled) await disableCurrentPushSubscription(user);
+
+    trackEvent("meal_reminder_updated", {
+      meal: reminderId,
+      enabled: nextEnabled,
+      timezone: nextPreference.timezone
     });
-
-    if ("serviceWorker" in navigator && window.isSecureContext) {
-      const registration = await getReadyServiceWorkerRegistration();
-      const subscription = await registration.pushManager.getSubscription();
-      if (subscription) {
-        const subscriptionId = await getSubscriptionId(subscription.endpoint);
-        await disablePushSubscription(currentUser.uid, subscriptionId);
-        await subscription.unsubscribe();
-      }
-    }
-
-    notificationPreference = {
-      enabled: false,
-      timezone: getLocalTimeZone(),
-      hour: REMINDER_HOUR,
-      minute: REMINDER_MINUTE
-    };
-    trackEvent("plant_reminder_disabled");
-    renderNotificationControls("Reminders are off.");
+    renderNotificationControls(`${reminder.label} reminders are ${nextEnabled ? "on" : "off"}.`);
   } catch (error) {
-    console.error("Disable reminders error:", error);
-    renderNotificationControls(error.message || "Could not disable reminders.");
+    console.error("Update meal reminder error:", error);
+    renderNotificationControls(error.message || `Could not update ${reminder.label} reminders.`);
   } finally {
     notificationChangeInFlight = false;
     renderNotificationControls(notificationStatusOverride);
@@ -430,7 +501,7 @@ async function checkPendingTestNotification() {
 
     if (subscription?.lastTestStatus === "failed") {
       clearPendingTestNotification();
-      renderNotificationControls("Test delivery failed. Disable and re-enable reminders, then try again.");
+      renderNotificationControls("Test delivery failed. Switch all meal reminders off, then turn one back on and retry.");
       return;
     }
 
@@ -459,7 +530,7 @@ async function sendTestNotification() {
   if (testNotificationInFlight || notificationChangeInFlight || pendingTestNotification) return;
 
   if (!currentUser || !notificationPreference?.enabled) {
-    renderNotificationControls("Enable reminders before sending a test.");
+    renderNotificationControls("Choose at least one meal reminder before sending a test.");
     return;
   }
   const testUser = currentUser;
@@ -471,7 +542,7 @@ async function sendTestNotification() {
   }
 
   if (Notification.permission !== "granted") {
-    renderNotificationControls("Notification permission is not granted. Disable and re-enable reminders first.");
+    renderNotificationControls("Notification permission is not granted. Set up this device first.");
     return;
   }
 
@@ -491,6 +562,7 @@ async function sendTestNotification() {
 
     const subscriptionId = await getSubscriptionId(subscription.endpoint);
     await savePushSubscription(testUser.uid, subscriptionId, getPushSubscriptionPayload(subscription));
+    currentDevicePushReady = true;
 
     renderNotificationControls("Queuing a test notification...");
     trackEvent("plant_reminder_test_requested");
@@ -609,11 +681,13 @@ void registerPlanterlyServiceWorker().catch(error => {
 });
 
 enableNotificationsBtn?.addEventListener("click", () => {
-  void enablePlantReminders();
+  void setupNotificationsForCurrentDevice();
 });
 
-disableNotificationsBtn?.addEventListener("click", () => {
-  void disablePlantReminders();
+reminderToggleInputs.forEach(input => {
+  input.addEventListener("change", () => {
+    void updateMealReminder(input.dataset.reminderId, input.checked);
+  });
 });
 
 testNotificationBtn?.addEventListener("click", () => {

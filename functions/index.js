@@ -8,11 +8,8 @@ const { defineSecret } = require("firebase-functions/params");
 const logger = require("firebase-functions/logger");
 const webpush = require("web-push");
 const {
-  DEFAULT_REMINDER_HOUR,
-  DEFAULT_REMINDER_MINUTE,
-  DEFAULT_WINDOW_MINUTES,
-  getLocalDateTimeParts,
-  shouldSendReminderAt
+  getDueReminderAt,
+  getLocalDateTimeParts
 } = require("./reminderLogic");
 const {
   getSubscriptionValidationError
@@ -53,24 +50,17 @@ function getUserRefFromPreferenceDoc(preferenceDoc) {
   return preferenceDoc.ref.parent.parent;
 }
 
-function getPreferenceSchedule(preference) {
-  return {
-    hour: Number.isInteger(preference.hour) ? preference.hour : DEFAULT_REMINDER_HOUR,
-    minute: Number.isInteger(preference.minute) ? preference.minute : DEFAULT_REMINDER_MINUTE,
-    windowMinutes: DEFAULT_WINDOW_MINUTES
-  };
-}
-
-function getPushPayload(localDate) {
+function getPushPayload(localDate, reminder) {
   return JSON.stringify({
     title: "Planterly",
-    body: "Remember to log today's plants.",
+    body: `Remember to log your ${reminder.meal.toLowerCase()} plants.`,
     icon: DEFAULT_ICON,
     badge: DEFAULT_ICON,
-    tag: `plant-log-reminder-${localDate}`,
+    tag: `plant-log-${reminder.id}-${localDate}`,
     data: {
       url: APP_URL,
-      localDate
+      localDate,
+      reminderId: reminder.id
     }
   });
 }
@@ -93,17 +83,23 @@ function isExpiredSubscriptionError(error) {
   return error?.statusCode === 404 || error?.statusCode === 410;
 }
 
-async function userHasLoggedPlantsToday(userRef, localDate) {
+async function userHasLoggedMealToday(userRef, localDate, meal) {
   const meals = await userRef.collection("meals")
     .where("date", "==", localDate)
-    .limit(1)
     .get();
-  return !meals.empty;
+  const normalizedMeal = String(meal || "").trim().toLowerCase();
+  return meals.docs.some(mealDoc =>
+    String(mealDoc.data().meal || "").trim().toLowerCase() === normalizedMeal
+  );
 }
 
-async function sendReminderToSubscription(subscriptionDoc, payload, localDate) {
+async function sendReminderToSubscription(subscriptionDoc, payload, localDate, reminderId) {
   const subscription = subscriptionDoc.data();
   const validationError = getSubscriptionValidationError(subscriptionDoc.id, subscription);
+  const lastSentByReminder = subscription.lastSentByReminder &&
+    typeof subscription.lastSentByReminder === "object"
+    ? subscription.lastSentByReminder
+    : {};
 
   if (validationError) {
     await subscriptionDoc.ref.set({
@@ -114,7 +110,8 @@ async function sendReminderToSubscription(subscriptionDoc, payload, localDate) {
     return { sent: false, skipped: true };
   }
 
-  if (subscription.lastSentLocalDate === localDate) {
+  const legacyLastSentDate = reminderId === "dinner" ? subscription.lastSentLocalDate : null;
+  if (lastSentByReminder[reminderId] === localDate || legacyLastSentDate === localDate) {
     return { sent: false, skipped: true };
   }
 
@@ -126,7 +123,10 @@ async function sendReminderToSubscription(subscriptionDoc, payload, localDate) {
     }, payload);
 
     await subscriptionDoc.ref.set({
-      lastSentLocalDate: localDate,
+      lastSentByReminder: {
+        ...lastSentByReminder,
+        [reminderId]: localDate
+      },
       lastSentAt: fieldValue.serverTimestamp(),
       lastError: fieldValue.delete(),
       updatedAt: fieldValue.serverTimestamp()
@@ -164,9 +164,9 @@ async function sendReminderForPreference(preferenceDoc, now) {
 
   const preference = preferenceDoc.data();
   const timeZone = preference.timezone || "UTC";
-  const schedule = getPreferenceSchedule(preference);
+  const reminder = getDueReminderAt(now, timeZone, preference);
 
-  if (!shouldSendReminderAt(now, timeZone, schedule)) {
+  if (!reminder) {
     return { sent: 0, skipped: 1 };
   }
 
@@ -179,16 +179,16 @@ async function sendReminderForPreference(preferenceDoc, now) {
     return { sent: 0, skipped: 1 };
   }
 
-  if (await userHasLoggedPlantsToday(userRef, localDate)) {
+  if (await userHasLoggedMealToday(userRef, localDate, reminder.meal)) {
     return { sent: 0, skipped: subscriptions.size };
   }
 
-  const payload = getPushPayload(localDate);
+  const payload = getPushPayload(localDate, reminder);
   let sent = 0;
   let skipped = 0;
 
   for (const subscriptionDoc of subscriptions.docs) {
-    const result = await sendReminderToSubscription(subscriptionDoc, payload, localDate);
+    const result = await sendReminderToSubscription(subscriptionDoc, payload, localDate, reminder.id);
     if (result.sent) sent += 1;
     if (result.skipped) skipped += 1;
   }
@@ -208,7 +208,7 @@ async function reserveTestNotification(uid, subscriptionId, requestedAtMs, reser
     if (!subscriptionSnapshot.exists || subscriptionSnapshot.data().enabled !== true) {
       throw new HttpsError(
         "failed-precondition",
-        "This device does not have an active push subscription. Disable and re-enable reminders, then try again."
+        "This device does not have an active push subscription. Switch all meal reminders off, then turn one back on and retry."
       );
     }
 
@@ -216,7 +216,7 @@ async function reserveTestNotification(uid, subscriptionId, requestedAtMs, reser
     if (getSubscriptionValidationError(subscriptionId, subscription)) {
       throw new HttpsError(
         "failed-precondition",
-        "This device's push subscription is invalid. Disable and re-enable reminders, then try again."
+        "This device's push subscription is invalid. Switch all meal reminders off, then turn one back on and retry."
       );
     }
 

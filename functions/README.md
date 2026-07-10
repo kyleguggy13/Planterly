@@ -1,6 +1,6 @@
 # Planterly Functions
 
-Firebase Cloud Functions sends the 9:00 PM plant log reminders.
+Firebase Cloud Functions sends the selected meal-based plant log reminders.
 
 ## VAPID keys
 
@@ -36,9 +36,9 @@ npm --prefix functions test
 firebase deploy --only functions
 ```
 
-The scheduled function checks every 15 minutes. It sends only when a signed-in user's saved timezone is in the 9:00 PM reminder window and no meal exists for that local date.
+The scheduled function checks every 15 minutes for enabled Breakfast (10:00 AM), Lunch (1:00 PM), and Dinner (9:00 PM) reminders in each signed-in user's saved timezone. A meal's notification is skipped when that meal is already logged for the local date.
 
-Its filtered collection-group query requires a collection-group-scope ascending index on `notificationPreferences.enabled`. Verify that index in Firestore (or create it from the link in the scheduled function's index error) before relying on nightly reminders.
+Its filtered collection-group query requires a collection-group-scope ascending index on `notificationPreferences.enabled`. Verify that index in Firestore (or create it from the link in the scheduled function's index error) before relying on meal reminders.
 
 The first deploy of `deliverTestNotification` also creates its private Cloud Tasks queue. Both test functions use the project's Gen 2 runtime service account, and the task worker declares that account as its only invoker so Firebase can maintain the queue enqueuer and function invoker bindings. Cloud Tasks may still require a one-time `roles/iam.serviceAccountUser` self-binding so that account can mint its task OIDC token; follow Firebase's task queue IAM setup if the callable reports an `iam.serviceAccounts.actAs` error.
 
@@ -54,6 +54,6 @@ Firestore rules must deny client access to the root `notificationTestRateLimits`
 
 ## Manual test
 
-The same deployment creates the authenticated `sendTestNotification` callable and the private `deliverTestNotification` task function. After a signed-in user enables reminders, **Send Test Notification** validates the current device's subscription and queues a task scheduled eight seconds later. The app only tells the user to press Home or lock an iPhone after Cloud Tasks accepts the request.
+The same deployment creates the authenticated `sendTestNotification` callable and the private `deliverTestNotification` task function. After a signed-in user selects at least one meal reminder, **Send Test Notification** validates the current device's subscription and queues a task scheduled eight seconds later. The app only tells the user to press Home or lock an iPhone after Cloud Tasks accepts the request.
 
 This is an end-to-end test of the saved subscription, VAPID configuration, push service, and service worker. Test requests are limited to one per signed-in account every 30 seconds, and diagnostic pushes expire immediately if the device is offline.

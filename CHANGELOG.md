@@ -11,6 +11,7 @@ Planterly uses semantic versioning: `MAJOR.MINOR.PATCH`. Major and minor version
 - Added PWA manifest, service worker, and Firebase Functions scaffolding for opt-in 9:00 PM plant log push reminders.
 - Added a signed-in reminder control in the menu with iPhone Home Screen support messaging.
 - Added an authenticated, one-device test notification that bypasses the scheduled reminder checks.
+- Expanded reminder settings into independent Breakfast (10:00 AM), Lunch (1:00 PM), and Dinner (9:00 PM) toggles with meal-specific skip logic.
 
 ## v0.2.0 - 2026-04-24
 

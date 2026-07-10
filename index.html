@@ -77,10 +77,35 @@
             <div class="utility-section">
               <span class="utility-label">Reminders</span>
               <div class="notification-controls">
-                <div class="sidebar-data-copy">9:00 PM plant log reminder</div>
+                <div class="sidebar-data-copy">Choose meal reminders</div>
+                <div class="reminder-toggle-list">
+                  <label class="reminder-toggle" for="breakfast-reminder-toggle">
+                    <span class="reminder-toggle-copy">
+                      <span class="reminder-toggle-meal">Breakfast</span>
+                      <span class="reminder-toggle-time">10:00 AM</span>
+                    </span>
+                    <input id="breakfast-reminder-toggle" type="checkbox" role="switch" data-reminder-id="breakfast">
+                    <span class="reminder-switch" aria-hidden="true"></span>
+                  </label>
+                  <label class="reminder-toggle" for="lunch-reminder-toggle">
+                    <span class="reminder-toggle-copy">
+                      <span class="reminder-toggle-meal">Lunch</span>
+                      <span class="reminder-toggle-time">1:00 PM</span>
+                    </span>
+                    <input id="lunch-reminder-toggle" type="checkbox" role="switch" data-reminder-id="lunch">
+                    <span class="reminder-switch" aria-hidden="true"></span>
+                  </label>
+                  <label class="reminder-toggle" for="dinner-reminder-toggle">
+                    <span class="reminder-toggle-copy">
+                      <span class="reminder-toggle-meal">Dinner</span>
+                      <span class="reminder-toggle-time">9:00 PM</span>
+                    </span>
+                    <input id="dinner-reminder-toggle" type="checkbox" role="switch" data-reminder-id="dinner">
+                    <span class="reminder-switch" aria-hidden="true"></span>
+                  </label>
+                </div>
                 <div class="notification-actions">
-                  <button class="btn btn-ghost" id="enable-notifications-btn" type="button">Enable Reminders</button>
-                  <button class="btn btn-ghost" id="disable-notifications-btn" type="button" hidden>Disable Reminders</button>
+                  <button class="btn btn-ghost" id="enable-notifications-btn" type="button" hidden>Set Up This Device</button>
                   <button class="btn btn-ghost" id="test-notification-btn" type="button" hidden>Send Test Notification</button>
                 </div>
                 <span class="notification-status" id="notification-status">Sign in to enable reminders.</span>
