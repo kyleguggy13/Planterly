@@ -307,9 +307,29 @@
           <div class="card">
             <div class="card-header">
               <span class="card-title">Quick-add from library</span>
-              <span class="card-meta" id="lib-quick-count"></span>
+              <div class="quick-library-header-actions">
+                <span class="card-meta" id="lib-quick-count"></span>
+                <div class="quick-sort-menu" id="quick-sort-menu">
+                  <button class="quick-sort-toggle" id="quick-sort-toggle" type="button" aria-label="Sort quick-add library" aria-haspopup="menu" aria-expanded="false" aria-controls="quick-sort-options">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                      <circle cx="12" cy="5" r="1"/>
+                      <circle cx="12" cy="12" r="1"/>
+                      <circle cx="12" cy="19" r="1"/>
+                    </svg>
+                  </button>
+                  <div class="quick-sort-options" id="quick-sort-options" role="menu" aria-label="Sort quick-add library" hidden>
+                    <button class="quick-sort-option active" type="button" role="menuitemradio" aria-checked="true" data-sort="alphabetical">
+                      <span>Alphabetical</span><span class="quick-sort-check" aria-hidden="true">✓</span>
+                    </button>
+                    <button class="quick-sort-option" type="button" role="menuitemradio" aria-checked="false" data-sort="most-used">
+                      <span>Most used</span><span class="quick-sort-check" aria-hidden="true">✓</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
             </div>
             <div class="card-body">
+              <div class="quick-filters" id="quick-filters" role="group" aria-label="Filter library by category"></div>
               <div class="quick-grid" id="quick-grid"></div>
             </div>
           </div>
@@ -533,6 +553,9 @@ let editingMealId = null;
 let saveMsgTimer = null;
 let dataStatusTimer = null;
 let heroDismissed = false;
+let quickLibCategory = 'all';
+let quickLibSort = 'alphabetical';
+let quickSortMenuOpen = false;
 
 const dateInput = document.getElementById('f-date');
 const mealInput = document.getElementById('f-meal');
@@ -564,6 +587,9 @@ const historyCategoryCopy = document.getElementById('history-category-copy');
 const historyCategorySelect = document.getElementById('history-category-select');
 const historyCategoryCancelBtn = document.getElementById('history-category-cancel');
 const historyCategoryCancelAction = document.getElementById('history-category-cancel-action');
+const quickSortMenu = document.getElementById('quick-sort-menu');
+const quickSortToggle = document.getElementById('quick-sort-toggle');
+const quickSortOptions = document.getElementById('quick-sort-options');
 const desktopLayoutQuery = window.matchMedia('(min-width: 1024px)');
 
 let mobileDrawerOpen = false;
@@ -661,14 +687,21 @@ drawerCloseBtn.addEventListener('click', () => closeMobileDrawer());
 drawerOverlay.addEventListener('click', () => closeMobileDrawer());
 desktopMenuToggle.addEventListener('click', toggleDesktopUtility);
 document.addEventListener('click', event => {
-  if (!desktopLayoutQuery.matches || !desktopUtilityOpen) return;
   const target = event.target;
+  if (quickSortMenuOpen && target instanceof Node && !quickSortMenu.contains(target)) {
+    setQuickSortMenuOpen(false);
+  }
+  if (!desktopLayoutQuery.matches || !desktopUtilityOpen) return;
   if (!(target instanceof Node)) return;
   if (desktopMenuToggle.contains(target) || desktopUtilityPanel.contains(target)) return;
   setDesktopUtilityOpen(false);
 });
 document.addEventListener('keydown', event => {
   if (event.key === 'Escape') {
+    if (quickSortMenuOpen) {
+      setQuickSortMenuOpen(false);
+      quickSortToggle.focus();
+    }
     if (mobileDrawerOpen) closeMobileDrawer();
     if (desktopUtilityOpen) setDesktopUtilityOpen(false);
     return;
@@ -734,6 +767,30 @@ function trackAppEvent(eventName, eventParams = {}) {
 function trackAppScreenView(page) {
   window.planterlyAnalytics?.trackScreenView?.(page);
 }
+
+function setQuickSortMenuOpen(nextOpen, options = {}) {
+  const { focusFirst = false } = options;
+  quickSortMenuOpen = nextOpen;
+  quickSortOptions.hidden = !quickSortMenuOpen;
+  quickSortToggle.setAttribute('aria-expanded', String(quickSortMenuOpen));
+  if (quickSortMenuOpen && focusFirst) {
+    window.requestAnimationFrame(() => quickSortOptions.querySelector('.quick-sort-option')?.focus());
+  }
+}
+
+quickSortToggle.addEventListener('click', () => {
+  const nextOpen = !quickSortMenuOpen;
+  setQuickSortMenuOpen(nextOpen, { focusFirst: nextOpen });
+});
+
+quickSortOptions.querySelectorAll('.quick-sort-option').forEach(option => {
+  option.addEventListener('click', () => {
+    quickLibSort = option.dataset.sort === 'most-used' ? 'most-used' : 'alphabetical';
+    renderQuickLib();
+    setQuickSortMenuOpen(false);
+    quickSortToggle.focus();
+  });
+});
 
 // ── Period selector ───────────────────────────────────────────────────
 const periodSel = document.getElementById('period-sel');
@@ -926,11 +983,69 @@ function renderMetrics() {
 
 // ── Quick library ─────────────────────────────────────────────────────
 function renderQuickLib() {
+  const filters = document.getElementById('quick-filters');
   const el = document.getElementById('quick-grid');
+  const categories = [
+    { key: 'all', label: 'All', shortLabel: 'All' },
+    ...Object.entries(CAT).map(([key, value]) => ({
+      key,
+      label: value.label,
+      shortLabel: {
+        vegetable: 'Veg',
+        legume: 'Bean',
+        nut: 'Nut',
+      }[key] || value.label,
+    })),
+  ];
+
+  filters.innerHTML = '';
+  categories.forEach(category => {
+    const button = document.createElement('button');
+    const isActive = quickLibCategory === category.key;
+    button.type = 'button';
+    button.className = 'quick-filter' + (isActive ? ' active' : '');
+    button.setAttribute('aria-pressed', String(isActive));
+    button.setAttribute('aria-label', 'Show ' + category.label + ' plants');
+    button.title = category.label;
+    button.innerHTML = '<span class="quick-filter-full">' + category.label + '</span>' +
+      '<span class="quick-filter-short" aria-hidden="true">' + category.shortLabel + '</span>';
+    button.onclick = () => {
+      quickLibCategory = category.key;
+      renderQuickLib();
+    };
+    filters.appendChild(button);
+  });
+
+  quickSortOptions.querySelectorAll('.quick-sort-option').forEach(option => {
+    const isActive = option.dataset.sort === quickLibSort;
+    option.classList.toggle('active', isActive);
+    option.setAttribute('aria-checked', String(isActive));
+  });
+
   el.innerHTML = '';
-  document.getElementById('lib-quick-count').textContent = appState.library.length + ' plants';
+  const visiblePlants = appState.library.filter(plant => quickLibCategory === 'all' || plant.cat === quickLibCategory);
+  document.getElementById('lib-quick-count').textContent = quickLibCategory === 'all'
+    ? appState.library.length + ' plants'
+    : visiblePlants.length + ' of ' + appState.library.length + ' plants';
   if (!appState.library.length) { el.innerHTML = '<span class="chips-empty">Library is empty.</span>'; return; }
-  [...appState.library].sort((a,b) => a.name.localeCompare(b.name)).forEach(p => {
+  if (!visiblePlants.length) {
+    const categoryLabel = CAT[quickLibCategory]?.label.toLowerCase() || 'matching';
+    el.innerHTML = '<span class="chips-empty">No ' + categoryLabel + ' plants in your library.</span>';
+    return;
+  }
+  const usageByPlant = new Map();
+  appState.meals.forEach(meal => meal.plants.forEach(name => {
+    const key = normalizePlantName(name);
+    usageByPlant.set(key, (usageByPlant.get(key) || 0) + 1);
+  }));
+  [...visiblePlants].sort((a, b) => {
+    if (quickLibSort === 'most-used') {
+      const usageDifference = (usageByPlant.get(normalizePlantName(b.name)) || 0) -
+        (usageByPlant.get(normalizePlantName(a.name)) || 0);
+      if (usageDifference) return usageDifference;
+    }
+    return a.name.localeCompare(b.name);
+  }).forEach(p => {
     const col = CAT[p.cat] || CAT.other;
     const el2 = document.createElement('button');
     el2.type = 'button';
