@@ -266,7 +266,7 @@
       <div id="page-log" class="page active">
         <div class="form-layout">
 
-          <div class="card">
+          <div class="card" id="entry-form-card">
             <div class="card-header">
               <span class="card-title" id="entry-form-title">Add meal entry</span>
             </div>
@@ -570,6 +570,7 @@ const plantInput = document.getElementById('f-plant-input');
 const submitBtn = document.getElementById('submit-btn');
 const cancelEditBtn = document.getElementById('edit-cancel-btn');
 const formTitle = document.getElementById('entry-form-title');
+const entryFormCard = document.getElementById('entry-form-card');
 const saveMsg = document.getElementById('save-msg');
 const exportBtn = document.getElementById('export-btn');
 const importBtn = document.getElementById('import-btn');
@@ -1275,6 +1276,15 @@ function startPrefillingEntry(entry) {
   showSaveMessage('Copied meal into a new entry.', 'var(--text-2)', 0);
 }
 
+function scrollToEntryForm() {
+  window.requestAnimationFrame(() => {
+    const topbarHeight = document.querySelector('.topbar')?.getBoundingClientRect().height || 0;
+    const targetTop = window.scrollY + entryFormCard.getBoundingClientRect().top - topbarHeight - 12;
+    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    window.scrollTo({ top: Math.max(0, targetTop), behavior: reduceMotion ? 'auto' : 'smooth' });
+  });
+}
+
 dateInput.value = todayISO;
 mealInput.value = getDefaultMealForTime();
 submitBtn.onclick = async () => {
@@ -1411,12 +1421,12 @@ function renderHistory() {
     tr.querySelector('[data-action="copy"]').onclick = () => {
       startPrefillingEntry(entry);
       setActivePage('log');
-      window.scrollTo(0, 0);
+      scrollToEntryForm();
     };
     tr.querySelector('[data-action="edit"]').onclick = () => {
       startEditingEntry(entry);
       setActivePage('log');
-      window.scrollTo(0, 0);
+      scrollToEntryForm();
     };
     tr.querySelector('[data-action="remove"]').onclick = async () => {
       try {
