@@ -1486,7 +1486,46 @@
     flex: 1 1 120px;
   }
 
+  .log-actions .btn {
+    min-height: 32px;
+    padding: 0 10px;
+    font-size: 12px;
+  }
+
   @media (max-width: 1023px) {
+    .log-row {
+      position: relative;
+    }
+
+    .log-row .log-date {
+      min-height: 30px;
+      padding-right: 148px;
+    }
+
+    .log-row .log-actions-cell {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      display: block;
+    }
+
+    .log-row .log-actions-cell::before {
+      content: none;
+      display: none;
+    }
+
+    .log-row .log-actions {
+      flex-wrap: nowrap;
+      gap: 4px;
+    }
+
+    .log-row .log-actions .btn {
+      flex: 0 0 auto;
+      min-height: 28px;
+      padding: 0 7px;
+      font-size: 11px;
+    }
+
     .lib-row {
       grid-template-columns: minmax(0, 1fr) auto auto auto;
       align-items: center;

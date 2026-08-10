@@ -494,6 +494,13 @@ const persist = () => { try { localStorage.setItem('pt-app', JSON.stringify(appS
 
 // ── Helpers ───────────────────────────────────────────────────────────
 const toTitle = s => s.trim().replace(/\b\w/g, c => c.toUpperCase());
+const getDefaultMealForTime = (date = new Date()) => {
+  const hour = date.getHours();
+  if (hour >= 5 && hour < 11) return 'Breakfast';
+  if (hour >= 11 && hour < 16) return 'Lunch';
+  if (hour >= 16 && hour < 22) return 'Dinner';
+  return 'Snacks';
+};
 const parseISODateLocal = iso => {
   if (!isISODate(iso)) return null;
   const [year, month, day] = iso.split('-').map(Number);
@@ -1150,7 +1157,7 @@ function resetEntryForm() {
   editingMealId = null;
   selectedPlants = [];
   dateInput.value = todayISO;
-  mealInput.value = 'Dinner';
+  mealInput.value = getDefaultMealForTime();
   plantInput.value = '';
   formTitle.textContent = 'Add meal entry';
   submitBtn.textContent = 'Save meal entry';
@@ -1269,6 +1276,7 @@ function startPrefillingEntry(entry) {
 }
 
 dateInput.value = todayISO;
+mealInput.value = getDefaultMealForTime();
 submitBtn.onclick = async () => {
   const date = dateInput.value;
   const meal = mealInput.value;
@@ -1392,7 +1400,7 @@ function renderHistory() {
       <td class="log-date" data-label="Date">${fmtDate(entry.date)}</td>
       <td data-label="Meal"><span class="log-meal-badge">${entry.meal}</span></td>
       <td data-label="Plants"><div class="log-plants-cell">${plantsHtml}</div></td>
-      <td data-label="Actions">
+      <td class="log-actions-cell">
         <div class="log-actions">
           <button class="btn btn-secondary" type="button" data-action="copy">Copy</button>
           <button class="btn btn-secondary" type="button" data-action="edit">Edit</button>
