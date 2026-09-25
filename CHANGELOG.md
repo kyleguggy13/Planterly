@@ -10,7 +10,7 @@ Planterly uses semantic versioning: `MAJOR.MINOR.PATCH`. Major and minor version
 
 - Prepared direct Cloudflare Workers hosting for `planterly-app.com`, including a frontend-only build, canonical URL, installed-app identity, and push notification links.
 - Removed OpenAI Sites configuration and detached the custom domain from its retired Sites deployment.
-- Added Cloudflare Access token validation to keep the app private, including all static assets, and direct Wrangler deployment commands.
+- Made the website publicly accessible through direct Wrangler deployment, independently of GitHub repository visibility; removed the temporary Cloudflare Access gate and its dependency.
 - Added local development and validation commands plus a branded social preview.
 - Documented domain setup, Firebase sign-in, existing-user data migration, and retiring GitHub Pages.
 - Documented the shared Firebase contract and future native SwiftUI architecture using DriveTrace's separate web/iOS approach.

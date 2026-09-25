@@ -14,9 +14,9 @@ npm run lint
 npm run deploy:check
 ```
 
-The UI development server binds only to `127.0.0.1:3000`. Run `npm run build` after editing and refresh the browser. `npm run dev:worker` exercises the actual Worker locally; it denies access without a valid Cloudflare Access configuration and signed token. Use `.dev.vars.example` as a starting point only for that integration testing.
+The UI development server binds only to `127.0.0.1:3000`. Run `npm run build` after editing and refresh the browser. `npm run dev:worker` exercises the actual public Worker locally, including redirects and service-worker cache headers.
 
-`wrangler.jsonc` defines Worker `planterly-app`, serves frontend files from `dist/`, and attaches `planterly-app.com` as a Worker Custom Domain. Build output excludes Firebase source and saved log exports. Every asset request goes through the Worker to validate Cloudflare Access. The alternate `workers.dev` hostname and preview URLs are disabled.
+`wrangler.jsonc` defines Worker `planterly-app`, serves frontend files from `dist/`, and attaches `planterly-app.com` as a Worker Custom Domain. Build output excludes Firebase source and saved log exports. The Worker serves the app publicly and handles legacy project-path redirects and app-update headers. The alternate `workers.dev` hostname and preview URLs are disabled.
 
 ## First deployment into your account
 
@@ -36,32 +36,17 @@ npm run deploy
 
 Wrangler runs the frontend build, uploads the Worker and assets, and attaches the custom domain. Cloudflare manages the domain's DNS record and certificate. Do not use `--temporary`, which deploys to a temporary account instead of your own. If multiple accounts are available, choose the one owning the domain or set `CLOUDFLARE_ACCOUNT_ID` in your shell.
 
-The first deployment deliberately responds with **503 Private app setup is not complete** until Access is configured. It does not expose the frontend while configuration is missing.
+## Public website, private repository
 
-## Keep the app private
+Anyone can open the website without a Cloudflare login. Firebase sign-in remains available for personal cloud data; Firestore security rules must continue enforcing per-user access. Making the frontend public does not change those rules.
 
-The current preference is owner-only access. Firebase login alone is not a private-site gate; it protects account data, while Cloudflare Access protects entry to the web app.
+Cloudflare Access and the old ACCESS_TEAM_DOMAIN / ACCESS_AUD settings are no longer used. If a Planterly-specific Access application was created during the earlier setup, disable its protection in the Worker's Access tab. If account-wide protection is enabled for other Workers, exempt only Planterly rather than removing protection from other applications.
 
-1. Enable Cloudflare Zero Trust if needed.
-2. Go to **Workers & Pages > planterly-app > Access > Protect this Worker behind Access**.
-3. Select **All traffic**, configure an Allow policy for only your individual email address, and apply it. Use an available identity provider or email one-time PIN. Do not allow Everyone or your entire email domain.
-4. In the Access application settings, copy the **Application Audience (AUD) Tag**. Also find your Zero Trust team domain, in the form `https://your-team.cloudflareaccess.com`.
-5. Set these Worker values through Wrangler's interactive prompts:
-
-```powershell
-npx wrangler secret put ACCESS_TEAM_DOMAIN
-npx wrangler secret put ACCESS_AUD
-```
-
-Enter the HTTPS team origin for the first prompt and the exact AUD tag for the second. These identify the Access application; never paste a browser session token into either setting. Secrets remain in your Cloudflare account and are not checked into Git.
-
-6. Open `https://planterly-app.com/`, complete Access sign-in, and verify the app loads. A private/incognito request must encounter Access sign-in or a denial. Verify that only your allowed account gets through.
-
-The Worker verifies the Access JWT signature, issuer, audience, and expiration before serving assets. `run_worker_first: true` is required to prevent direct asset bypass. If configuration is absent or invalid, it denies access. Do not change these controls to fix a setup error. Worker Static Assets do not currently forward `ctx.access`, so the implementation validates the documented JWT header instead.
+You can make the GitHub repository private when ready; the deployed website remains public. CLI deployment uses your local checkout. If using automatic GitHub builds, ensure the Cloudflare GitHub app retains permission to this repository after its visibility changes. Browser-delivered HTML, CSS, and JavaScript remain visible to website visitors even with a private source repository.
 
 ## Optional automatic deployments from GitHub
 
-After the first deployment and private access work, connect `kyleguggy13/Planterly` in **Workers & Pages > planterly-app > Settings > Builds**. Use production branch `main`, repository root as the root directory, and deploy command `npm run deploy`. The Wrangler custom build already runs `npm run build`, so do not add a duplicate build command. Retain the Access settings and Worker secrets. GitHub remains the code source; Cloudflare owns the deployment.
+After the first deployment works, connect `kyleguggy13/Planterly` in **Workers & Pages > planterly-app > Settings > Builds**. Use production branch `main`, repository root as the root directory, and deploy command `npm run deploy`. The Wrangler custom build already runs `npm run build`, so do not add a duplicate build command. GitHub remains the code source; Cloudflare owns the deployment.
 
 Alternatively, run `npm run deploy` yourself after changes. Neither path uses OpenAI Sites.
 
@@ -81,7 +66,7 @@ npx firebase-tools login
 npx firebase-tools deploy --only functions --project planterly-data
 ```
 
-Worker deployment does not deploy Firebase functions. Keep existing VAPID secrets. Reinstall the Home Screen web app from the new origin, enable notifications again, and test for duplicate old subscriptions. An expired Access session can require sign-in when opening a notification; test this private setup on your device.
+Worker deployment does not deploy Firebase functions. Keep existing VAPID secrets. Reinstall the Home Screen web app from the new origin, enable notifications again, and test for duplicate old subscriptions. Test notification delivery and opening the app on your device.
 
 ## Retire previous hosting
 
@@ -98,4 +83,4 @@ The planned SwiftUI app shares Firebase accounts and data directly; it does not 
 - [Worker Custom Domains](https://developers.cloudflare.com/workers/configuration/routing/custom-domains/)
 - [Worker static assets](https://developers.cloudflare.com/workers/static-assets/binding/)
 - [Cloudflare Access for Workers](https://developers.cloudflare.com/workers/configuration/cloudflare-access/)
-- [Validate Access JWTs](https://developers.cloudflare.com/cloudflare-one/access-controls/applications/http-apps/authorization-cookie/validating-json/)
+- [Cloudflare Git integration](https://developers.cloudflare.com/workers/ci-cd/builds/git-integration/)

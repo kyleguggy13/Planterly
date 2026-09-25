@@ -21,4 +21,4 @@ The CLI account must own the active `planterly-app.com` Cloudflare zone. Resolve
 
 Only the apex hostname is configured. Add `www` later through a deliberate Worker Custom Domain configuration if needed. Alternate `workers.dev` and preview URLs are disabled.
 
-The Worker denies access until Cloudflare Access is configured. Follow the [deployment and private-access steps](domain-migration.md). Verify HTTPS, owner-only access, Firebase sign-in, and saved data before disabling the old GitHub Pages site.
+The website is public and requires no Cloudflare Access configuration. Follow the [deployment steps](domain-migration.md). Verify anonymous HTTPS access, Firebase sign-in, and saved data before disabling the old GitHub Pages site.

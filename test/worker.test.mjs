@@ -1,61 +1,45 @@
-import assert from "node:assert/strict";
+﻿import assert from "node:assert/strict";
 import test from "node:test";
-import { createLocalJWKSet, exportJWK, generateKeyPair, SignJWT } from "jose";
-import { createWorker } from "../worker/index.mjs";
+import worker from "../worker/index.mjs";
 
-const { publicKey, privateKey } = await generateKeyPair("RS256");
-const jwk = { ...await exportJWK(publicKey), kid: "test-key", alg: "RS256" };
-const worker = createWorker(() => createLocalJWKSet({ keys: [jwk] }));
-const issuer = "https://planterly-test.cloudflareaccess.com";
-const audience = "planterly-test-audience";
-let assetRequests = 0;
-const env = {
-  ACCESS_TEAM_DOMAIN: issuer,
-  ACCESS_AUD: audience,
-  ASSETS: { fetch: async () => { assetRequests++; return new Response("app asset"); } }
-};
+const request = path => new Request(`https://planterly-app.com${path}`);
 
-async function token(overrides = {}, signingKey = privateKey) {
-  const now = Math.floor(Date.now() / 1000);
-  return new SignJWT({ iss: issuer, aud: audience, sub: "owner", iat: now, exp: now + 300, ...overrides })
-    .setProtectedHeader({ alg: "RS256", kid: "test-key" }).sign(signingKey);
-}
-function request(jwt, path = "/") {
-  return new Request(`https://planterly-app.com${path}`, {
-    headers: jwt ? { "Cf-Access-Jwt-Assertion": jwt } : {}
-  });
-}
-
-test("missing Access setup denies requests before asset delivery", async () => {
-  const before = assetRequests;
-  const response = await worker.fetch(request(), { ASSETS: env.ASSETS });
-  assert.equal(response.status, 503);
-  assert.equal(assetRequests, before);
-});
-
-test("missing, forged, expired, wrong-issuer and wrong-audience tokens cannot fetch assets", async () => {
-  const foreign = await generateKeyPair("RS256");
-  for (const jwt of [undefined, "forged-token", await token({ exp: 1 }),
-    await token({ iss: "https://other.cloudflareaccess.com" }),
-    await token({ aud: "another-app" }), await token({}, foreign.privateKey)]) {
-    const before = assetRequests;
-    const response = await worker.fetch(request(jwt, "/js/app.js"), env);
-    assert.equal(response.status, 403);
-    assert.equal(assetRequests, before);
-    assert.equal(response.headers.get("Cache-Control"), "private, no-store");
+test("anonymous visitors can load the frontend and assets without Access settings", async () => {
+  for (const path of ["/", "/js/app.js", "/assets/icons/icon-192.png"]) {
+    let requestedUrl;
+    const env = { ASSETS: { fetch: async req => {
+      requestedUrl = req.url;
+      return new Response("asset", { headers: { "Content-Type": "text/plain" } });
+    } } };
+    const response = await worker.fetch(request(path), env);
+    assert.equal(response.status, 200);
+    assert.equal(await response.text(), "asset");
+    assert.equal(requestedUrl, request(path).url);
+    assert.equal(response.headers.get("Content-Type"), "text/plain");
   }
 });
 
-test("valid signed Access token serves the asset without public caching", async () => {
-  const response = await worker.fetch(request(await token()), env);
-  assert.equal(response.status, 200);
-  assert.equal(await response.text(), "app asset");
-  assert.equal(response.headers.get("Cache-Control"), "private, no-store");
+test("missing assets retain their 404 response", async () => {
+  const response = await worker.fetch(request("/missing.js"), {
+    ASSETS: { fetch: async () => new Response("Not found", { status: 404 }) }
+  });
+  assert.equal(response.status, 404);
 });
 
-test("legacy project paths redirect only after authentication and preserve queries", async () => {
-  const response = await worker.fetch(request(await token(), "/Planterly/?source=old"), env);
+test("service worker and manifest revalidate while preserving their content type", async () => {
+  for (const path of ["/sw.js", "/manifest.json"]) {
+    const response = await worker.fetch(request(path), {
+      ASSETS: { fetch: async () => new Response("asset", {
+        headers: { "Content-Type": "application/javascript", "Cache-Control": "max-age=3600" }
+      }) }
+    });
+    assert.equal(response.headers.get("Cache-Control"), "no-cache");
+    assert.equal(response.headers.get("Content-Type"), "application/javascript");
+  }
+});
+
+test("legacy project paths redirect publicly and preserve queries", async () => {
+  const response = await worker.fetch(request("/Planterly/?source=old"), {});
   assert.equal(response.status, 301);
   assert.equal(response.headers.get("Location"), "https://planterly-app.com/?source=old");
-  assert.equal((await worker.fetch(request(undefined, "/Planterly/"), env)).status, 403);
 });

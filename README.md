@@ -4,7 +4,7 @@ Planterly is a static web app for tracking the plants you eat and building towar
 
 Production domain: [Planterly](https://planterly-app.com/)
 
-Hosting: direct Cloudflare Workers in your own Cloudflare account. See [deployment and private access](support/domain-migration.md) and [domain setup](support/domain-dns.md) to activate this domain and retire previous hosting.
+Hosting: a public website on Cloudflare Workers in your own Cloudflare account. See [deployment](support/domain-migration.md) and [domain setup](support/domain-dns.md). GitHub repository visibility is independent of website access.
 
 ## Features
 
@@ -32,13 +32,13 @@ Weekly progress is calculated from meal dates using Sunday-Saturday weeks. Day, 
 
 ## Development
 
-Planterly serves its frontend through a Cloudflare Worker that enforces private access. GitHub holds the source repository. The main app lives in `index.html`, styling lives in `css/style.css`, and Firebase sync helpers live in `js/app.js` and `js/firebase.js`.
+Planterly serves its public frontend through a Cloudflare Worker. Firebase handles user sign-in and cloud data access. GitHub holds the source repository, which may be private. The main app lives in `index.html`, styling lives in `css/style.css`, and Firebase sync helpers live in `js/app.js` and `js/firebase.js`.
 
 Requires Node.js 22.13 or newer. Run `npm ci`, then `npm run dev` to serve the app at `http://127.0.0.1:3000`. After editing, run `npm run build` and refresh the browser. This loopback-only UI server does not require Cloudflare sign-in.
 
-Run `npm test` for build, asset, private-access, and reminder tests; run `npm run lint` for syntax checks and `npm run deploy:check` to validate Worker packaging. The frontend is written to `dist/`; Firebase functions, documentation, and saved log exports are excluded.
+Run `npm test` for build, asset, public-access, and reminder tests; run `npm run lint` for syntax checks and `npm run deploy:check` to validate Worker packaging. The frontend is written to `dist/`; Firebase functions, documentation, and saved log exports are excluded.
 
-`wrangler.jsonc` defines the Worker and custom domain. Sign in with `npx wrangler login` and publish with `npm run deploy`. Configure Cloudflare Access for your email and set `ACCESS_TEAM_DOMAIN` and `ACCESS_AUD` on the Worker; it denies access until configured. Cloudflare deployments and Firebase Functions deployments are separate. No OpenAI Sites connection is used.
+`wrangler.jsonc` defines the Worker and custom domain. Sign in with `npx wrangler login` and publish with `npm run deploy`. Cloudflare Access and Access secrets are not required. Cloudflare deployments and Firebase Functions deployments are separate. No OpenAI Sites connection is used.
 
 The future native SwiftUI app will share Firebase accounts and data, following DriveTrace's separate web/native architecture. See the [iOS handoff and data contract](support/ios-architecture.md).
 

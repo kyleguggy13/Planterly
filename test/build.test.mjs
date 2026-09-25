@@ -30,7 +30,7 @@ test("deployment excludes backend files and personal log exports", () => {
   }
   const hosting = JSON.parse(readFileSync(join(root, "wrangler.jsonc"), "utf8"));
   assert.equal(hosting.assets.directory, "./dist");
-  assert.equal(hosting.assets.run_worker_first, true, "Every asset must pass the private access gate");
+  assert.equal(hosting.assets.run_worker_first, true, "Worker handles legacy redirects and app update headers");
   assert.equal(hosting.workers_dev, false);
   assert.equal(hosting.preview_urls, false);
 });
