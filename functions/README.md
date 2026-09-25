@@ -36,6 +36,8 @@ npm --prefix functions test
 firebase deploy --only functions
 ```
 
+Reminder links and icons use `https://planterly-app.com/`. Redeploy these functions after the new domain serves the app over HTTPS; publishing the frontend through Sites does not deploy functions. See [Domain migration](../support/domain-migration.md).
+
 The scheduled function checks every 15 minutes for enabled Breakfast (10:00 AM), Lunch (1:00 PM), and Dinner (9:00 PM) reminders in each signed-in user's saved timezone. A meal's notification is skipped when that meal is already logged for the local date.
 
 Its filtered collection-group query requires a collection-group-scope ascending index on `notificationPreferences.enabled`. Verify that index in Firestore (or create it from the link in the scheduled function's index error) before relying on meal reminders.

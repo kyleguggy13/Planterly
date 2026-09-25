@@ -1,4 +1,4 @@
-const APP_URL = "https://kyleguggy13.github.io/Planterly/";
+const APP_URL = "https://planterly-app.com/";
 const DEFAULT_ICON = `${APP_URL}assets/icons/icon-192.png`;
 
 self.addEventListener("install", event => {

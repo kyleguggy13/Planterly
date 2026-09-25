@@ -6,6 +6,13 @@ Planterly uses semantic versioning: `MAJOR.MINOR.PATCH`. Major and minor version
 
 ## Unreleased
 
+### Patch
+
+- Prepared Sites-managed Cloudflare hosting for `planterly-app.com`, including a frontend-only build, canonical URL, installed-app identity, and push notification links.
+- Added local development and validation commands plus a branded social preview.
+- Documented domain setup, Firebase sign-in, existing-user data migration, and retiring GitHub Pages.
+- Documented the shared Firebase contract and future native SwiftUI architecture using DriveTrace's separate web/iOS approach.
+
 ### Minor
 
 - Added PWA manifest, service worker, and Firebase Functions scaffolding for opt-in 9:00 PM plant log push reminders.

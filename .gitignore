@@ -1,4 +1,7 @@
 functions/node_modules/
+dist/
+node_modules/
+.site-artifacts/
 functions/.env
 functions/.env.*
 !functions/.env.example

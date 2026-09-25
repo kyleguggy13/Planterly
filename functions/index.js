@@ -24,7 +24,7 @@ const vapidPublicKey = defineSecret("PLANTERLY_VAPID_PUBLIC_KEY");
 const vapidPrivateKey = defineSecret("PLANTERLY_VAPID_PRIVATE_KEY");
 const vapidSubject = defineSecret("PLANTERLY_VAPID_SUBJECT");
 
-const APP_URL = "https://kyleguggy13.github.io/Planterly/";
+const APP_URL = "https://planterly-app.com/";
 const DEFAULT_ICON = `${APP_URL}assets/icons/icon-192.png`;
 const FUNCTIONS_RUNTIME_SERVICE_ACCOUNT = "275892702436-compute@developer.gserviceaccount.com";
 const TEST_NOTIFICATION_DELAY_SECONDS = 8;
