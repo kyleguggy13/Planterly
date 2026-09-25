@@ -1,22 +1,24 @@
-# planterly-app.com DNS setup
+﻿# planterly-app.com domain setup
 
-The Sites deployment is published at https://planterly.kylegug.chatgpt.site. Domain activation is pending DNS verification; these records were returned by Sites for this specific project on 2026-09-25 UTC.
+The domain now belongs to the direct Cloudflare Workers deployment configured in `wrangler.jsonc`. The previous OpenAI Sites custom-domain attachment has been removed and the previous DNS instructions are obsolete.
 
-In Cloudflare, open **planterly-app.com > DNS > Records** and add the following. Use Auto TTL and DNS only (gray cloud) for the A records. Replace conflicting apex web records from the earlier GitHub Pages plan; preserve unrelated MX and TXT records.
+## Before deploying
 
-| Type | Name in Cloudflare | Content |
-| --- | --- | --- |
-| A | @ | `162.159.143.30` |
-| A | @ | `172.66.3.26` |
-| TXT | `_openai-site-verification` | `openai-site-verification=ggfLYzGYCCF0IHWLkcXAhbFo7JOgYGfZnMWdJXDJ2vg` |
-| TXT | `_cf-custom-hostname` | `d220b0f4-62b6-46ca-977c-c3c557342a27` |
+In Cloudflare DNS, check whether any records from earlier attempts were actually added. Remove only obsolete web-hosting records for this migration:
 
-These are domain verification values, not account credentials. Do not substitute the previous GitHub Pages IPs or create a Cloudflare Pages project. The domain is already attached through Sites.
+- Apex A records targeting `162.159.143.30` or `172.66.3.26` (the former Sites targets).
+- A CNAME targeting `custom-domains.chatgpt.site`.
+- The `_openai-site-verification` and `_cf-custom-hostname` TXT records created specifically for this retired Planterly attachment, if present.
+- Apex A records targeting GitHub Pages (`185.199.108.153` through `185.199.111.153`) or a `www` CNAME targeting `kyleguggy13.github.io`, if added during the earlier plan.
 
-After saving the records, ask Codex to refresh Planterly's custom-domain status. Certificate issuance may expose additional verification records; complete any returned records before treating the domain as active.
+Preserve unrelated MX, TXT, and other service records. If these records were never added, there is nothing to remove.
 
-The apex uses the two A records above. Sites also returned `custom-domains.chatgpt.site.` as a subdomain CNAME target, but `www.planterly-app.com` has not been attached and must be registered separately before using it.
+## Attach the Worker
 
-Firebase Authentication must authorize `planterly-app.com` before Google sign-in works there, and `planterly.kylegug.chatgpt.site` for testing on the Sites address. Domain activation does not change the Sites audience; the initial deployment is private until explicitly changed.
+Sign in using `npx wrangler login`, then run `npm run deploy`. The `routes` entry in `wrangler.jsonc` attaches `planterly-app.com` using `custom_domain: true`. Cloudflare creates the required DNS record and certificate automatically; no static hosting IPs or OpenAI verification tokens are needed.
 
-Keep GitHub Pages available until the new domain, sign-in, data, and reminders have been verified. See [migration instructions](domain-migration.md).
+The CLI account must own the active `planterly-app.com` Cloudflare zone. Resolve any existing-record conflict by checking that the conflicting web record is obsolete before replacing it.
+
+Only the apex hostname is configured. Add `www` later through a deliberate Worker Custom Domain configuration if needed. Alternate `workers.dev` and preview URLs are disabled.
+
+The Worker denies access until Cloudflare Access is configured. Follow the [deployment and private-access steps](domain-migration.md). Verify HTTPS, owner-only access, Firebase sign-in, and saved data before disabling the old GitHub Pages site.

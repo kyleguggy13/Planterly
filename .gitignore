@@ -2,6 +2,11 @@ functions/node_modules/
 dist/
 node_modules/
 .site-artifacts/
+.wrangler/
+.npm-cache/
+.dev.vars
+.dev.vars.*
+!.dev.vars.example
 functions/.env
 functions/.env.*
 !functions/.env.example

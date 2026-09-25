@@ -1,4 +1,4 @@
-﻿# Planterly iOS architecture and shared data contract
+# Planterly iOS architecture and shared data contract
 
 This is the handoff for a future native app, not an implemented iOS client. The sibling `Planterly-iOS` repository was empty when inspected. DriveTrace-iOS is a native SwiftUI/SwiftData app with a shared backend, rather than a web-view wrapper; use that same separation for Planterly.
 
@@ -7,7 +7,7 @@ This is the handoff for a future native app, not an implemented iOS client. The 
 | Layer | Web | Planned iOS |
 | --- | --- | --- |
 | UI | Existing HTML/CSS/JavaScript | SwiftUI |
-| Hosting/distribution | Sites-managed Cloudflare hosting | Xcode, TestFlight, App Store |
+| Hosting/distribution | Direct Cloudflare Workers hosting | Xcode, TestFlight, App Store |
 | Local data | Existing browser storage | SwiftData behind a repository protocol |
 | Identity | Firebase Auth with Google | Firebase Auth with native provider integration |
 | Shared data | Firestore in `planterly-data` | The same Firestore project and user UID |

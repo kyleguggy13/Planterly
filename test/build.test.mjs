@@ -28,7 +28,9 @@ test("deployment excludes backend files and personal log exports", () => {
   for (const name of ["functions", "support", ".env", ".git", ".openai", "firebase.json", "CNAME"]) {
     assert.equal(existsSync(join(output, name)), false, `Unexpected public path: ${name}`);
   }
-  const hosting = JSON.parse(readFileSync(join(root, ".openai/hosting.json"), "utf8"));
-  assert.equal(hosting.static.directory, "dist");
-  assert.ok(hosting.project_id);
+  const hosting = JSON.parse(readFileSync(join(root, "wrangler.jsonc"), "utf8"));
+  assert.equal(hosting.assets.directory, "./dist");
+  assert.equal(hosting.assets.run_worker_first, true, "Every asset must pass the private access gate");
+  assert.equal(hosting.workers_dev, false);
+  assert.equal(hosting.preview_urls, false);
 });

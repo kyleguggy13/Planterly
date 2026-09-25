@@ -1,0 +1,4 @@
+# Local Worker tests use your real Access configuration and a valid Access JWT.
+# For everyday UI development without Access, use npm run dev on loopback only.
+ACCESS_TEAM_DOMAIN=https://YOUR-TEAM.cloudflareaccess.com
+ACCESS_AUD=YOUR-ACCESS-APPLICATION-AUDIENCE
