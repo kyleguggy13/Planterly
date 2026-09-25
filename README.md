@@ -4,6 +4,8 @@ Planterly is a static web app for tracking the plants you eat and building towar
 
 Production domain: [Planterly](https://planterly-app.com/)
 
+Sites deployment: [Planterly on Sites](https://planterly.kylegug.chatgpt.site). The custom domain is pending the [Cloudflare DNS setup](support/domain-dns.md).
+
 See [Domain migration](support/domain-migration.md) for the Sites and Firebase setup required to activate this domain and retire GitHub Pages.
 
 ## Features
